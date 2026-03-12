@@ -233,6 +233,48 @@ public sealed class OrderCreationTests : PageTest
 - Use `[Parameter]` only for public API of component; internal state via fields
 - `EventCallback<T>` for child-to-parent communication
 
+### MudBlazor Conventions
+
+- Prefer MudBlazor components over raw HTML at all times
+- Use `MudDataGrid` for tabular data (not `MudTable` unless legacy)
+- Use `MudForm` + `MudTextField` / `MudSelect` for forms with validation
+- Use `MudDialog` for confirmations and modals (not custom overlays)
+- Use `MudSnackbar` for user feedback / toast messages
+- Use `MudSkeleton` for loading states
+- Layout: `MudLayout` → `MudAppBar` + `MudDrawer` + `MudMainContent`
+- Icons: use `Icons.Material.Filled.*` consistently
+
+### Component Conventions
+
+- One component per file
+- Component files: `PascalCase.razor`
+- Code-behind files: `PascalCase.razor.cs` (partial class)
+- Services injected via `@inject` or constructor in code-behind
+- No business logic in `.razor` files — only binding and UI events
+- Reuse components from `/src/Shared/` before creating new ones
+
+### State & Data Flow
+
+- Components do not call APIs directly — always go through a service
+- Services are registered in `Program.cs` with appropriate lifetime
+- Use `EventCallback` for child→parent communication
+- Use `CascadingParameter` only for truly global state (e.g. auth, theme)
+
+---
+
+## UI Development Workflow (Mandatory Phase Order)
+
+**Never skip phases. Never write component code before wireframe approval.**
+
+| Phase | Skill | Gate |
+|---|---|---|
+| 1 — Brainstorm | `/ui-brainstorm` | ASCII wireframe approved |
+| 2 — Flow | `/ui-flow` | Mermaid diagrams approved |
+| 3 — Build | `/ui-build` | Shell → logic → interactions → polish |
+| 4 — Review | `/ui-review` | Checklist passes |
+
+Skill files located in `.ai/skills/`.
+
 ---
 
 ## Entity Framework Core

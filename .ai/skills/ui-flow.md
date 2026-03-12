@@ -39,3 +39,4 @@ End with: "Do these diagrams capture the intended logic? Approve to continue to 
 - If the flow reveals a missing screen, surface it — do not silently skip it
 - Keep Mermaid diagrams readable: max ~15 nodes per diagram, split if needed
 - Use MudBlazor component names in the component map (e.g. MudDataGrid, MudDialog)
+- On approval, save the diagrams to `docs/design/<feature-name>/flow.md`

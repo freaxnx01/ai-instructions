@@ -127,6 +127,32 @@ public static class OrderEndpoints
 
 ---
 
+## API Testing (Bruno)
+
+Use [Bruno](https://www.usebruno.com/) for manual and exploratory REST API testing. Collections are stored in `bruno/` at repo root and committed to Git.
+
+```
+bruno/
+├── bruno.json                     ← collection config
+├── environments/
+│   ├── local.bru                  ← http://localhost:<port>
+│   └── staging.bru
+└── <module>/
+    ├── create-<entity>.bru
+    ├── get-<entity>-by-id.bru
+    ├── update-<entity>.bru
+    └── delete-<entity>.bru
+```
+
+- One folder per module, mirroring the API route structure
+- Request files named with the action: `create-order.bru`, `get-order-by-id.bru`
+- Use Bruno environments for base URL and auth tokens — never hardcode URLs or secrets in `.bru` files
+- Keep requests in sync with endpoints — when adding/changing an API endpoint, update or add the corresponding Bruno request
+- Include example request bodies with realistic test data
+- Add assertions in Bruno where useful (status code, response shape)
+
+---
+
 ## Testing Strategy
 
 ### Principle: TDD — Tests First, No Shortcuts
@@ -381,7 +407,7 @@ MAJOR.MINOR.PATCH  →  e.g. 2.4.1
 | `fix`, `perf` | PATCH |
 | `chore`, `docs`, `ci`, `test`, `refactor` | No bump |
 
-- Version is the single source of truth in the `.csproj` / `Directory.Build.props` as `<Version>`
+- One global version for all assemblies — defined once in `Directory.Build.props` as `<Version>`, never in individual `.csproj` files
 - Git tags follow `v<MAJOR>.<MINOR>.<PATCH>` (e.g. `v1.3.0`) — tag on `main` after merge
 - Pre-release: `v1.0.0-alpha.1`, `v1.0.0-beta.2`, `v1.0.0-rc.1`
 - Docker images tagged with the same version + `latest` on stable releases
@@ -556,6 +582,26 @@ jobs:
     - dotnet test tests/E2E
     - docker-compose down
 ```
+
+---
+
+## Documentation Structure
+
+```
+docs/
+├── design/                    ← UI wireframes & Mermaid flows per feature
+│   └── <feature-name>/
+│       ├── wireframe.md       ← Phase 1 output (ASCII wireframe)
+│       └── flow.md            ← Phase 2 output (Mermaid diagrams)
+├── adr/                       ← Architecture Decision Records
+└── ai-notes/                  ← AI agent working notes
+```
+
+- `README.md` and `CHANGELOG.md` live in the repo root
+- `bruno/` in repo root for Bruno API request collections
+- UI design artifacts are saved per feature during the UI workflow phases
+- AI agents write working notes to `docs/ai-notes/`, not `.ai/`
+- `.ai/` is reserved for agent instructions and skill files only
 
 ---
 

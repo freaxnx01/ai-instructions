@@ -113,6 +113,14 @@ dotnet list package --outdated
 │   ├── <Module>.IntegrationTests/
 │   ├── <Module>.ComponentTests/  ← bUnit
 │   └── E2E/                      ← Playwright
+├── bruno/                         ← Bruno API request collections
+├── docs/
+│   ├── design/                    ← UI wireframes & Mermaid flows per feature
+│   │   └── <feature-name>/
+│   │       ├── wireframe.md       ← Phase 1 output (ASCII wireframe)
+│   │       └── flow.md            ← Phase 2 output (Mermaid diagrams)
+│   ├── adr/                       ← Architecture Decision Records
+│   └── ai-notes/                  ← AI agent working notes
 ├── .ai/
 │   ├── base-instructions.md      ← canonical conventions reference
 │   └── skills/
@@ -131,6 +139,8 @@ dotnet list package --outdated
 ├── Directory.Packages.props
 ├── global.json
 ├── CLAUDE.md                     ← this file
+├── CHANGELOG.md                  ← Keep a Changelog format
+├── README.md                     ← repo root
 └── SKILL.md                      ← OpenClaw
 ```
 
@@ -265,12 +275,13 @@ docker-compose down -v
 
 ## Versioning
 
-This project follows [SemVer 2.0.0](https://semver.org/). Version defined once in `Directory.Build.props`:
+This project follows [SemVer 2.0.0](https://semver.org/). One global version for all assemblies, defined once in `Directory.Build.props`:
 
 ```xml
 <Version>1.0.0</Version>
 ```
 
+- **Single version** — never set `<Version>` in individual `.csproj` files; all assemblies inherit from `Directory.Build.props`
 - Git tag on every release: `v<MAJOR>.<MINOR>.<PATCH>`
 - Docker images tagged with same version + `latest` on stable
 - Conventional Commits drive the bump: `feat` → MINOR · `fix`/`perf` → PATCH · `BREAKING CHANGE:` footer → MAJOR
@@ -384,3 +395,33 @@ Types: `feat` `fix` `test` `refactor` `chore` `docs` `ci` `perf`
 | `/health/ready` | Readiness (checks DB, dependencies) |
 | `/scalar` | API documentation |
 | `/metrics` | Prometheus metrics |
+
+---
+
+## API Testing (Bruno)
+
+Use [Bruno](https://www.usebruno.com/) for manual and exploratory REST API testing. Collections are stored in `bruno/` at repo root and committed to Git.
+
+### Collection structure
+
+```
+bruno/
+├── bruno.json                     ← collection config
+├── environments/
+│   ├── local.bru                  ← http://localhost:<port>
+│   └── staging.bru
+└── <module>/
+    ├── create-<entity>.bru
+    ├── get-<entity>-by-id.bru
+    ├── update-<entity>.bru
+    └── delete-<entity>.bru
+```
+
+### Conventions
+
+- One folder per module, mirroring the API route structure
+- Request files named with the action: `create-order.bru`, `get-order-by-id.bru`
+- Use Bruno environments for base URL and auth tokens — never hardcode URLs or secrets in `.bru` files
+- Keep requests in sync with endpoints — when adding/changing an API endpoint, update or add the corresponding Bruno request
+- Include example request bodies with realistic test data
+- Add assertions in Bruno where useful (status code, response shape)

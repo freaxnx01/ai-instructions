@@ -46,3 +46,4 @@ End with: "Does this wireframe match your intent? Approve to continue to Phase 2
 - No code in this phase
 - One wireframe iteration at a time
 - If the user asks for code, remind them we are still in Phase 1
+- On approval, save the wireframe to `docs/design/<feature-name>/wireframe.md`

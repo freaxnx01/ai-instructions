@@ -26,6 +26,7 @@ Activate this skill when the task involves any of:
 - xUnit test generation (unit, integration, bUnit, Playwright)
 - Docker / docker-compose file generation
 - GitHub Actions CI workflow generation
+- Bruno API request collection creation or updates
 - Architecture guidance for this stack
 
 ---
@@ -43,6 +44,7 @@ Validation:     FluentValidation
 Logging:        Serilog (structured)
 Observability:  OpenTelemetry
 API Docs:       OpenAPI + Scalar
+API Testing:    Bruno (collections in bruno/)
 Container:      Docker (Alpine), docker-compose
 Testing:        xUnit + FluentAssertions + NSubstitute + bUnit + Playwright
 ```
@@ -230,6 +232,32 @@ public sealed class <Feature>Tests : PageTest
 
 ---
 
+## API Testing (Bruno)
+
+Use [Bruno](https://www.usebruno.com/) for manual and exploratory REST API testing. Collections are stored in `bruno/` at repo root and committed to Git.
+
+```
+bruno/
+├── bruno.json                     ← collection config
+├── environments/
+│   ├── local.bru                  ← http://localhost:<port>
+│   └── staging.bru
+└── <module>/
+    ├── create-<entity>.bru
+    ├── get-<entity>-by-id.bru
+    ├── update-<entity>.bru
+    └── delete-<entity>.bru
+```
+
+- One folder per module, mirroring the API route structure
+- Request files named with the action: `create-order.bru`, `get-order-by-id.bru`
+- Use Bruno environments for base URL and auth tokens — never hardcode URLs or secrets in `.bru` files
+- Keep requests in sync with endpoints — when adding/changing an API endpoint, update or add the corresponding Bruno request
+- Include example request bodies with realistic test data
+- Add assertions in Bruno where useful (status code, response shape)
+
+---
+
 ## EF Core Rules
 
 - One `DbContext` per module
@@ -297,7 +325,7 @@ Skill files located in `.ai/skills/`.
 ## Versioning Rules
 
 - [SemVer 2.0.0](https://semver.org/): `MAJOR.MINOR.PATCH`
-- Version defined once: `<Version>` in `Directory.Build.props`
+- One global version for all assemblies — defined once in `Directory.Build.props` as `<Version>`, never in individual `.csproj` files
 - Conventional Commits drive version bumps automatically (via `git-cliff` or `semantic-release`):
 
 | Commit | Bump |
@@ -389,6 +417,26 @@ Types: `feat` `fix` `test` `refactor` `chore` `docs` `ci` `perf`
 - [ ] HTTPS enforced
 - [ ] No direct EF queries in domain layer
 - [ ] Vulnerable package check passes
+
+---
+
+## Documentation Structure
+
+```
+docs/
+├── design/                    ← UI wireframes & Mermaid flows per feature
+│   └── <feature-name>/
+│       ├── wireframe.md       ← Phase 1 output (ASCII wireframe)
+│       └── flow.md            ← Phase 2 output (Mermaid diagrams)
+├── adr/                       ← Architecture Decision Records
+└── ai-notes/                  ← AI agent working notes
+```
+
+- `README.md` and `CHANGELOG.md` live in the repo root
+- `bruno/` in repo root for Bruno API request collections
+- UI design artifacts are saved per feature during the UI workflow phases
+- AI agents write working notes to `docs/ai-notes/`, not `.ai/`
+- `.ai/` is reserved for agent instructions and skill files only
 
 ---
 

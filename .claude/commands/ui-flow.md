@@ -1,4 +1,4 @@
-Map UI logic with Mermaid flow diagrams (Phase 2 of 4). The ASCII wireframe from Phase 1 must be approved before starting.
+Map UI logic with Mermaid flow diagrams (Phase 2 of 4). The ASCII wireframe from Phase 1 must be approved before starting. Stack-neutral — use the active stack overlay (`.ai/stacks/<stack>.md`) for component-library naming in the component map.
 
 Context: $ARGUMENTS
 
@@ -14,7 +14,7 @@ Context: $ARGUMENTS
 2. Generate a Mermaid component & state map showing:
    - Component hierarchy (parent → children)
    - Which component owns which state
-   - Data flow direction (props down, EventCallback up)
+   - Data flow direction (props/parameters down, events up)
    - Which services are injected and where
    - API calls: which component triggers them
 3. List any additional screens or dialogs implied by this flow that were not in the wireframe — flag them explicitly
@@ -26,4 +26,4 @@ Context: $ARGUMENTS
 - No component code in this phase
 - If the flow reveals a missing screen, surface it — do not silently skip it
 - Keep Mermaid diagrams readable: max ~15 nodes per diagram, split if needed
-- Use MudBlazor component names in the component map (e.g. MudDataGrid, MudDialog)
+- Use component names from the active stack overlay in the component map (e.g. `MudDataGrid`, `MudDialog` for .NET/Blazor)

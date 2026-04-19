@@ -1,36 +1,68 @@
-# AI Coding Agent Template
+# AI Coding Agent Instructions
 
-Template repository for .NET 10 / ASP.NET Core / Blazor / MudBlazor projects with full AI agent configuration.
+Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each project loads **base + exactly one stack** so agent context stays clean — a Flutter session never sees .NET content, and vice versa.
 
-## Agent Files
+## Repository layout
 
-| File | Tool | Purpose |
+```
+.ai/
+  base-instructions.md          ← stack-agnostic conventions (SemVer, Conventional
+                                  Commits, TDD, Clean Code, 12-Factor, branching,
+                                  git-cliff, Keep a Changelog, UI phase gates)
+  stacks/
+    dotnet.md                   ← .NET 10 / ASP.NET Core / Blazor / MudBlazor / EF Core
+                                  / xUnit / bUnit / Playwright / Serilog / OpenTelemetry
+  skills/
+    commit.md           · push.md · release-notes.md
+    ui-brainstorm.md    · ui-flow.md · ui-build.md · ui-review.md
+    init-instructions.md        ← assembles base + chosen stack into a target project
+
+.claude/commands/               ← Claude Code slash-command wrappers for the skills above
+```
+
+New stacks (e.g. `flutter.md`, `node.md`) are added as their own files under `.ai/stacks/`. Nothing else in the repo changes when a stack is added.
+
+## How to use this repo in a project
+
+### Option A — `/init-instructions` skill (recommended)
+
+From inside your target project (not this repo):
+
+```
+/init-instructions dotnet
+```
+
+The skill fetches `base-instructions.md`, `stacks/dotnet.md`, and all shared skill files from `main`, assembles them into the target project's `CLAUDE.md`, `.github/copilot-instructions.md`, `SKILL.md`, and writes the stack overlay to `.ai/stacks/dotnet.md`. The target project ends up with **only** the stack it uses.
+
+If `$ARGUMENTS` is omitted, the skill lists available stacks and asks. It refuses to fall back silently on a missing stack.
+
+### Option B — clone as template (.NET only)
+
+This repo's root `CLAUDE.md`, `.github/copilot-instructions.md`, and `SKILL.md` are the pre-assembled rendering for a .NET project. If you want the .NET stack, cloning the repo gives you a working starting point. Fill in the TODO markers in `CLAUDE.md` (project name, purpose) and you're done.
+
+## Supported stacks
+
+| Stack | File | Covers |
 |---|---|---|
-| `.ai/base-instructions.md` | All | Canonical conventions — single source of truth |
-| `.github/copilot-instructions.md` | GitHub Copilot | Coding style, patterns, anti-patterns |
-| `CLAUDE.md` | Claude Code | Commands, structure, architecture context |
-| `SKILL.md` | OpenClaw | Skill definition, code generation templates |
+| `dotnet` | `.ai/stacks/dotnet.md` | .NET 10 · ASP.NET Core Minimal API · Blazor + MudBlazor · EF Core · xUnit / bUnit / Playwright · Serilog + OpenTelemetry · Alpine Docker |
 
-## How to Use
+To add a new stack: create `.ai/stacks/<name>.md` following the shape of `dotnet.md` and open a PR.
 
-1. Clone or use as template
-2. Fill in the `<!-- TODO -->` sections in `CLAUDE.md` (project name, purpose, env vars)
-3. Update `Directory.Packages.props` with current package versions
-4. Adjust `docker-compose.yml` for your services
-5. All agent files are ready to use as-is for the tech stack
+## Adding a new stack
 
-## Tech Stack
+Each stack overlay should cover, at minimum:
 
-- .NET 10 / C# 13
-- ASP.NET Core Minimal API
-- Blazor CSR/SSR + MudBlazor
-- Entity Framework Core (SQLite / PostgreSQL)
-- xUnit + FluentAssertions + NSubstitute + bUnit + Playwright
-- Serilog + OpenTelemetry
-- Docker + Alpine base images
+- Tech-stack table
+- Architecture conventions specific to the ecosystem
+- Language conventions (style, naming, what to never generate)
+- Testing framework choices, project layout, example templates
+- UI component-library preferences (if applicable)
+- Build / run / test commands
+- Container / deployment specifics
+- Stack-specific agent guardrails
 
-## Architecture
+Keep anything stack-agnostic (SemVer, Conventional Commits, TDD principles, Clean Code, 12-Factor, branching) in `base-instructions.md`, not in the overlay.
 
-Modular Monolith by default. Hexagonal (Ports & Adapters) within modules where appropriate.
+## Keeping a project in sync
 
-See `.ai/base-instructions.md` for full conventions reference.
+When `base-instructions.md` or the stack overlay changes, consumers re-run `/init-instructions <stack>` to regenerate their `CLAUDE.md` / copilot / SKILL files. The skill reports the source commit SHA so you know which version of the instructions is in use.

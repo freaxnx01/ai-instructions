@@ -11,7 +11,7 @@ Context: $ARGUMENTS
 5. Never stage files that likely contain secrets (`.env`, `credentials.json`, etc.)
 6. Draft a Conventional Commits message: `<type>(<scope>): <summary>`
    - Types: `feat` `fix` `test` `refactor` `chore` `docs` `ci` `perf`
-   - Scope: module or layer name (e.g. `orders`, `auth`, `blazor`)
+   - Scope: module or layer name (e.g. `orders`, `auth`, `ui`)
    - Summary: imperative mood, ≤72 chars, no period
    - Body (if needed): explain *why*, not *what*
 7. Commit using a HEREDOC for the message — do NOT amend unless explicitly asked, do NOT skip hooks

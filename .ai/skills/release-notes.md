@@ -16,7 +16,7 @@ RELEASENOTES.md is the **user-facing** companion to CHANGELOG.md. While CHANGELO
 
 ### Step 1 — Gather version info
 
-- Read the current version from `Directory.Build.props` (the `<Version>` element)
+- Read the current version from the project's version source (defined in the active stack overlay — e.g. `Directory.Build.props` for .NET, `pubspec.yaml` for Flutter, `package.json` for Node)
 - List all git tags sorted by version: `git tag --sort=-v:refname`
 - Read existing `RELEASENOTES.md` (if it exists) and identify which versions already have entries
 

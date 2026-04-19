@@ -4,7 +4,7 @@ Context: $ARGUMENTS
 
 ## Steps
 
-1. Read current version from `Directory.Build.props`
+1. Read current version from the project's version source (defined in the active stack overlay — e.g. `Directory.Build.props` for .NET, `pubspec.yaml` for Flutter, `package.json` for Node)
 2. List git tags: `git tag --sort=-v:refname`
 3. Read existing `RELEASENOTES.md` — identify which versions already have entries
 4. For each missing version, get commits: `git log <prev-tag>..<tag> --oneline --no-merges`

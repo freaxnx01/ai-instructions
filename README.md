@@ -13,28 +13,37 @@ Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each pr
     dotnet.md                   ← .NET 10 / ASP.NET Core / Blazor / MudBlazor / EF Core
                                   / xUnit / bUnit / Playwright / Serilog / OpenTelemetry
   skills/
-    commit.md           · push.md · release-notes.md
+    commit.md           · push.md
     ui-brainstorm.md    · ui-flow.md · ui-build.md · ui-review.md
-    init-instructions.md        ← assembles base + chosen stack into a target project
 
 .claude/commands/               ← Claude Code slash-command wrappers for the skills above
 ```
+
+`sync-ai-instructions` and `release-notes` used to live here as `.ai/skills/*.md`; they are now standalone plugins in the `freaxnx01/agent-skills` / `freaxnx01/claude-code-plugins` marketplaces and are available globally once installed.
 
 New stacks (e.g. `flutter.md`, `node.md`) are added as their own files under `.ai/stacks/`. Nothing else in the repo changes when a stack is added.
 
 ## How to use this repo in a project
 
-### Option A — `/init-instructions` skill (recommended)
+### Option A — `/sync-ai-instructions` skill (recommended)
 
-From inside your target project (not this repo):
+Install once:
 
 ```
-/init-instructions dotnet
+/plugin marketplace add freaxnx01/agent-skills
+/plugin install sync-ai-instructions@freax-agent-skills
+/reload-plugins
+```
+
+Then from inside your target project (not this repo):
+
+```
+/sync-ai-instructions dotnet
 ```
 
 The skill fetches `base-instructions.md`, `stacks/dotnet.md`, and all shared skill files from `main`, assembles them into the target project's `CLAUDE.md`, `.github/copilot-instructions.md`, `SKILL.md`, and writes the stack overlay to `.ai/stacks/dotnet.md`. The target project ends up with **only** the stack it uses.
 
-If `$ARGUMENTS` is omitted, the skill lists available stacks and asks. It refuses to fall back silently on a missing stack.
+Idempotent: safe to run for first-time setup **or** to refresh an already-initialized project. If `$ARGUMENTS` is omitted, the skill lists available stacks and asks. It refuses to fall back silently on a missing stack.
 
 ### Option B — clone as template (.NET only)
 
@@ -65,4 +74,4 @@ Keep anything stack-agnostic (SemVer, Conventional Commits, TDD principles, Clea
 
 ## Keeping a project in sync
 
-When `base-instructions.md` or the stack overlay changes, consumers re-run `/init-instructions <stack>` to regenerate their `CLAUDE.md` / copilot / SKILL files. The skill reports the source commit SHA so you know which version of the instructions is in use.
+When `base-instructions.md` or the stack overlay changes, consumers re-run `/sync-ai-instructions <stack>` to regenerate their `CLAUDE.md` / copilot / SKILL files. The skill reports the source commit SHA so you know which version of the instructions is in use.

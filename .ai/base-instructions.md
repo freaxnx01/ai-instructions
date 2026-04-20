@@ -15,9 +15,8 @@ Tool-specific files (`CLAUDE.md`, `.github/copilot-instructions.md`, `SKILL.md`)
     dotnet.md                 ← .NET / ASP.NET Core / Blazor
     <other>.md                ← added as new stacks are adopted
   skills/
-    commit.md · push.md · release-notes.md
+    commit.md · push.md
     ui-brainstorm.md · ui-flow.md · ui-build.md · ui-review.md
-    init-instructions.md
 ```
 
 A project loads **base + exactly one stack overlay**. Agents never need to see stacks they are not working in.

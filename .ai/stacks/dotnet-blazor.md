@@ -1,29 +1,28 @@
-[//]: # (Stack overlay — loaded together with .ai/base-instructions.md for .NET projects)
+[//]: # (GENERATED FILE — do not edit directly. Source: .ai/stacks/_partials/dotnet-core.md + .ai/stacks/_layers/dotnet-blazor.md. Run scripts/build-stacks.sh to regenerate.)
 
-# .NET Stack Overlay
+[//]: # (Stack partial — shared .NET conventions. Composed with a layer file under .ai/stacks/_layers/ by `scripts/build-stacks.sh` to produce a flat .ai/stacks/dotnet-*.md. Do not edit the generated file directly.)
 
-Applies on top of `.ai/base-instructions.md` for .NET 10 / ASP.NET Core / Blazor / MudBlazor projects.
+# .NET Core Conventions
+
+Shared baseline for every .NET stack overlay. Composed with a layer file (`dotnet-blazor` or `dotnet-webapi`) into the published flat overlay.
 
 ---
 
-## Tech Stack
+## Tech Stack (.NET baseline)
 
 | Layer | Technology |
 |---|---|
 | Runtime | .NET 10 / C# |
 | Backend | ASP.NET Core, Minimal API |
-| Frontend | Blazor CSR or SSR (per project) |
-| UI Components | MudBlazor |
 | ORM | Entity Framework Core |
 | DB (small) | SQLite |
 | DB (non-small) | PostgreSQL |
 | Validation | FluentValidation |
 | Logging | Serilog with structured output |
 | Observability | OpenTelemetry (traces + metrics) |
-| API Docs | OpenAPI + Scalar |
-| API Testing | Bruno (collections in `bruno/`) |
+| API docs | OpenAPI + Scalar |
 | Containerization | Docker + docker-compose (Alpine base images) |
-| Testing | xUnit + FluentAssertions + NSubstitute + bUnit + Playwright |
+| Unit / integration testing | xUnit + FluentAssertions + NSubstitute |
 
 ---
 
@@ -97,25 +96,28 @@ Apply when a module has multiple infrastructure adapters (e.g. REST + messaging)
 - Use `ILogger<T>` for logging — never `Console.WriteLine`
 - Use specific exception types — not generic `catch (Exception)`
 - Use `CancellationToken` in all async methods that call external resources
+- Use `async`/`await` end-to-end — never `Task.Result` or `.GetAwaiter().GetResult()`
 - No `#nullable disable` or warning suppressions to fix build errors
 - Never suppress nullable warnings with `!` without a clear comment
 
 ---
 
-## API Design (Minimal API)
+## API Design — Minimal API baseline
 
-- All endpoints grouped by module using `IEndpointRouteBuilder` extension methods
-- Route prefix: `/api/v{version}/{module}/...`
-- Error responses: RFC 9457 `ProblemDetails` — never return raw strings on error
-- Input validation: FluentValidation, validated before handler logic
-- OpenAPI via `Microsoft.AspNetCore.OpenApi` + Scalar UI at `/scalar`
+Every ASP.NET Core project (whether it exposes a REST surface or just a few endpoints for a Blazor app) follows these baseline conventions. The `dotnet-webapi` layer adds the deeper REST conventions on top.
+
+- All endpoints grouped by module via `IEndpointRouteBuilder` extension methods
+- One handler per file when the body is non-trivial; inline lambdas only for true one-liners
+- Input validation via FluentValidation, run at the boundary before any handler logic
+- Error responses are always `ProblemDetails` (RFC 9457) — never raw strings, anonymous error objects, or HTML error pages
+- OpenAPI via `Microsoft.AspNetCore.OpenApi`; Scalar UI mounted at `/scalar`
 
 ```csharp
 public static class OrderEndpoints
 {
     public static IEndpointRouteBuilder MapOrderEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/orders")
+        var group = app.MapGroup("/api/orders")
                        .WithTags("Orders")
                        .WithOpenApi();
 
@@ -129,52 +131,84 @@ public static class OrderEndpoints
 
 ---
 
-## API Testing (Bruno)
+## Entity Framework Core
 
-Use [Bruno](https://www.usebruno.com/) for manual and exploratory REST API testing. Collections are stored in `bruno/` at repo root and committed to Git.
+- One `DbContext` per module (not one global context)
+- Migrations in `<Module>/Infrastructure/Persistence/Migrations/`
+- `IEntityTypeConfiguration<T>` per entity — no data annotations on domain models
+- Never use `EF.Functions` in domain/application layers — only in infrastructure queries
+- Always use `AsNoTracking()` for read-only queries
+- Seed data via `IEntityTypeConfiguration.HasData()` or a dedicated seeder run at startup
 
+```bash
+# Add migration (run from repo root)
+dotnet ef migrations add <MigrationName> \
+  --project src/Modules/<Module>/Infrastructure \
+  --startup-project src/Host
+
+# Apply
+dotnet ef database update \
+  --project src/Modules/<Module>/Infrastructure \
+  --startup-project src/Host
+
+# Generate SQL script (for production review)
+dotnet ef migrations script \
+  --project src/Modules/<Module>/Infrastructure \
+  --startup-project src/Host \
+  --output migrations.sql
 ```
-bruno/
-├── bruno.json                     ← collection config
-├── environments/
-│   ├── local.bru                  ← http://localhost:<port>
-│   └── staging.bru
-└── <module>/
-    ├── create-<entity>.bru
-    ├── get-<entity>-by-id.bru
-    ├── update-<entity>.bru
-    └── delete-<entity>.bru
-```
 
-- One folder per module, mirroring the API route structure
-- Request files named with the action: `create-order.bru`, `get-order-by-id.bru`
-- Use Bruno environments for base URL and auth tokens — never hardcode URLs or secrets in `.bru` files
-- Keep requests in sync with endpoints — when adding/changing an API endpoint, update or add the corresponding Bruno request
-- Include example request bodies with realistic test data
-- Add assertions in Bruno where useful (status code, response shape)
+---
+
+## Localization & Regional Formatting (server-side baseline)
+
+Base rules for `de` / `en` support and regional formatting live in `base-instructions.md`. For every ASP.NET Core project on this stack:
+
+- Configure `RequestLocalizationMiddleware` in `Program.cs`:
+  ```csharp
+  var supportedCultures = new[] { "de-CH", "de-DE", "de-AT", "en-US", "en-GB" }
+      .Select(c => new CultureInfo(c)).ToList();
+  var supportedUICultures = new[] { "de", "en" }
+      .Select(c => new CultureInfo(c)).ToList();
+
+  app.UseRequestLocalization(new RequestLocalizationOptions
+  {
+      DefaultRequestCulture = new RequestCulture("de-CH", "de"),
+      SupportedCultures = supportedCultures,
+      SupportedUICultures = supportedUICultures,
+      ApplyCurrentCultureToResponseHeaders = true,
+  });
+  ```
+- Culture resolution order: cookie (`.AspNetCore.Culture`) → `Accept-Language` header → default (`de-CH` / `de`)
+- For language `de` with no recognized region (or a `de-*` region not in `SupportedCultures`), fall back to `de-CH` — never `de-DE`
+- Format dates / numbers / currency via `CurrentCulture` — never `string.Format` with a hardcoded culture or `CultureInfo.InvariantCulture` for user-visible text
+
+UI-specific localization rules (resource files for component strings, picker behaviour, language-switcher widgets) live in the Blazor layer.
 
 ---
 
 ## Testing Strategy
 
-### Test Projects Structure
+The base testing rules (TDD, no test modification to make green, full suite after implementation) live in `base-instructions.md`.
+
+### Test project layout (baseline)
 
 ```
 tests/
   <Module>.UnitTests/         ← xUnit, no I/O
-  <Module>.IntegrationTests/  ← xUnit + WebApplicationFactory + Testcontainers
-  <Module>.ComponentTests/    ← bUnit for Blazor components
-  E2E/                        ← Playwright
+  <Module>.IntegrationTests/  ← xUnit, real I/O via Testcontainers
 ```
 
-### Unit Tests (xUnit)
+Layer-specific test projects (Blazor component tests, Playwright E2E, API integration tests with `WebApplicationFactory`) are added by the layer overlay.
+
+### Unit tests (xUnit)
 
 - One test class per production class
 - Naming: `MethodName_StateUnderTest_ExpectedBehavior`
 - Use `FluentAssertions` for assertions
 - Use `NSubstitute` for mocks/stubs
 - No `[Fact]` with logic — use `[Theory]` + `[InlineData]` / `[MemberData]`
-- **After implementation, run the full test suite** (`dotnet test`) — not just the new test
+- After implementation, run the full test suite (`dotnet test`) — not just the new test
 
 ```csharp
 public sealed class CreateOrderHandlerTests
@@ -200,162 +234,6 @@ public sealed class CreateOrderHandlerTests
 }
 ```
 
-### Blazor Component Tests (bUnit)
-
-- Test components in isolation using `bUnit` + `Bunit.Web.AngleSharp`
-- Use `Ctx.RenderComponent<T>()` with parameter builders
-- Assert on rendered markup and component state
-- Mock services via `Ctx.Services.AddSingleton<IMyService>(mock)`
-- Test event handlers: `cut.Find("button").Click()` then assert resulting state
-- Test parameter changes: `cut.SetParametersAndRender(p => p.Add(x => x.Param, newValue))`
-- Test async lifecycle: use `cut.WaitForState(() => condition)` for loading states
-
-```csharp
-public sealed class OrderListComponentTests : TestContext
-{
-    [Fact]
-    public void OrderList_WithOrders_RendersOrderRows()
-    {
-        // Arrange
-        Services.AddSingleton(Substitute.For<IOrderService>());
-
-        // Act
-        var cut = RenderComponent<OrderList>(p =>
-            p.Add(c => c.Orders, [new OrderDto(Guid.NewGuid(), "Pending")]));
-
-        // Assert
-        cut.FindAll("tr.order-row").Should().HaveCount(1);
-    }
-}
-```
-
-### E2E Tests (Playwright)
-
-- Tests in `tests/E2E/`
-- Use `Microsoft.Playwright.NUnit` or xUnit wrapper
-- Page Object Model (POM) pattern — no raw selectors in test methods
-- Tests must be independent and idempotent (seed + teardown own data)
-- Run against `docker-compose` stack in CI
-
-```csharp
-public sealed class OrderCreationTests : PageTest
-{
-    [Test]
-    public async Task CreateOrder_ValidInput_ShowsConfirmation()
-    {
-        var page = new OrderPage(Page);
-        await page.GotoAsync();
-        await page.FillOrderFormAsync(customerId: "test-001");
-        await page.SubmitAsync();
-        await Expect(page.ConfirmationBanner).ToBeVisibleAsync();
-    }
-}
-```
-
----
-
-## Blazor Conventions
-
-- CSR (WebAssembly) for full SPA, SSR for SEO-critical or auth-heavy pages
-- MudBlazor as the only component library — no mixing with other UI libs
-- Components in `src/Host/Components/` or per-module `Components/` folder
-- `@code` block kept minimal — extract logic to services or `ViewModel` classes
-- Use `[Parameter]` only for the public API of component; internal state via fields
-- `EventCallback<T>` for child-to-parent communication
-
-### MudBlazor Conventions
-
-- Prefer MudBlazor components over raw HTML at all times
-- Use `MudDataGrid` for tabular data (not `MudTable` unless legacy)
-- Use `MudForm` + `MudTextField` / `MudSelect` for forms with validation
-- Use `MudDialog` for confirmations and modals (not custom overlays)
-- Use `MudSnackbar` for user feedback / toast messages
-- Use `MudSkeleton` for loading states
-- Layout: `MudLayout` → `MudAppBar` + `MudDrawer` + `MudMainContent`
-- Icons: use `Icons.Material.Filled.*` consistently
-
-### Component Conventions
-
-- One component per file
-- Component files: `PascalCase.razor`
-- Code-behind files: `PascalCase.razor.cs` (partial class)
-- Services injected via `@inject` or constructor in code-behind
-- No business logic in `.razor` files — only binding and UI events
-- Reuse components from `/src/Shared/` before creating new ones
-
-### State & Data Flow
-
-- Components do not call APIs directly — always go through a service
-- Services are registered in `Program.cs` with appropriate lifetime
-- Use `EventCallback` for child→parent communication
-- Use `CascadingParameter` only for truly global state (e.g. auth, theme)
-
-### UI workflow — stack-specific hints
-
-The phase order and gates are defined in `base-instructions.md`. For .NET/Blazor projects:
-
-- **Phase 1 (wireframe):** think in MudBlazor regions — `MudAppBar`, `MudDrawer`, `MudMainContent`, `MudDataGrid`, `MudForm`, `MudDialog`.
-- **Phase 2 (flow):** use MudBlazor component names in the component & state map.
-- **Phase 3 (build):** code-behind `.razor.cs` for all logic; use `MudSkeleton` / `MudProgressLinear` for loading, `MudSnackbar` for errors, `MudDialog` for destructive confirmations, `MudForm` + `DataAnnotations` for validation, `ma-*` / `pa-*` / `MudStack` / `MudGrid` for spacing.
-- **Phase 4 (review):** verify no raw HTML where a MudBlazor component exists; `MudDataGrid` (not `MudTable`), `MudSnackbar` (not custom toast), `Icons.Material.Filled.*`, a bUnit test file exists for the component.
-
----
-
-## Localization & Regional Formatting
-
-Base rules for language support and regional formatting live in `base-instructions.md`. For this stack:
-
-- Configure `RequestLocalizationMiddleware` in `Program.cs`:
-  ```csharp
-  var supportedCultures = new[] { "de-CH", "de-DE", "de-AT", "en-US", "en-GB" }
-      .Select(c => new CultureInfo(c)).ToList();
-  var supportedUICultures = new[] { "de", "en" }
-      .Select(c => new CultureInfo(c)).ToList();
-
-  app.UseRequestLocalization(new RequestLocalizationOptions
-  {
-      DefaultRequestCulture = new RequestCulture("de-CH", "de"),
-      SupportedCultures = supportedCultures,
-      SupportedUICultures = supportedUICultures,
-      ApplyCurrentCultureToResponseHeaders = true,
-  });
-  ```
-- Culture resolution order: cookie (`.AspNetCore.Culture`) → `Accept-Language` header → default (`de-CH` / `de`).
-- For language `de` with no recognized region (or a `de-*` region not in `SupportedCultures`), fall back to `de-CH` — not `de-DE`.
-- UI strings via `IStringLocalizer<T>` + `.resx` resources per `de` / `en`. Do not put translatable strings inline in `.razor` files.
-- Format dates / numbers / currency via `CurrentCulture` — never `string.Format` with a hardcoded culture or `CultureInfo.InvariantCulture` for user-visible text.
-- MudBlazor `MudDatePicker`, `MudNumericField`, etc. pick up `CurrentCulture` automatically — do not override per-component.
-- Provide a language switcher in the layout (`MudMenu` in `MudAppBar`) that writes the chosen language into the `.AspNetCore.Culture` cookie and reloads.
-
----
-
-## Entity Framework Core
-
-- One `DbContext` per module (not one global context)
-- Migrations in `<Module>/Infrastructure/Persistence/Migrations/`
-- `IEntityTypeConfiguration<T>` per entity — no data annotations on domain models
-- Never use `EF.Functions` in domain/application layers — only in infrastructure queries
-- Always use `AsNoTracking()` for read-only queries
-- Seed data via `IEntityTypeConfiguration.HasData()` or dedicated seeder run at startup
-
-```bash
-# Add migration (run from repo root)
-dotnet ef migrations add <MigrationName> \
-  --project src/Modules/<Module>/Infrastructure \
-  --startup-project src/Host
-
-# Apply
-dotnet ef database update \
-  --project src/Modules/<Module>/Infrastructure \
-  --startup-project src/Host
-
-# Generate SQL script (for production review)
-dotnet ef migrations script \
-  --project src/Modules/<Module>/Infrastructure \
-  --startup-project src/Host \
-  --output migrations.sql
-```
-
 ---
 
 ## Essential Commands
@@ -373,7 +251,6 @@ docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build
 dotnet test                                         # all
 dotnet test tests/<Module>.UnitTests                # unit only
 dotnet test tests/<Module>.IntegrationTests         # integration (needs Docker)
-dotnet test tests/<Module>.ComponentTests           # bUnit
 dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
 
 # Security / package checks
@@ -480,14 +357,16 @@ ENTRYPOINT ["dotnet", "Host.dll"]
 
 ---
 
-## Security
+## Security (stack baseline)
+
+Base security rules live in `base-instructions.md`. For every project on this stack:
 
 - HTTPS enforced in all environments; HSTS enabled
 - Security response headers: `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`
 - No secrets in `appsettings.json` — use `IConfiguration` with environment variable binding
 - Run `dotnet list package --vulnerable --fail-on-severity high` in CI — fail build on HIGH/CRITICAL
-- Validate all inputs at API boundary with FluentValidation before any domain logic
-- Error responses use ProblemDetails (no raw messages)
+- Validate all inputs at the API boundary with FluentValidation before any domain logic
+- Error responses use `ProblemDetails` (no raw messages)
 
 ---
 
@@ -500,7 +379,7 @@ Base rules (SemVer, Conventional Commits → bump mapping, git-cliff) live in `b
 
 ---
 
-## CI/CD (GitHub Actions)
+## CI/CD (GitHub Actions baseline)
 
 Pipeline stages: `build` → `test` → `security-scan` → `docker-build` → `push`
 
@@ -516,38 +395,33 @@ jobs:
     needs: build-and-test
     - docker build
     - docker push (on main only)
-
-  e2e:
-    needs: docker
-    - docker-compose up -d
-    - dotnet test tests/E2E
-    - docker-compose down
 ```
+
+Layer-specific CI jobs (E2E with Playwright for Blazor, k6 perf smoke for WebAPI) are added by the layer overlay.
 
 ---
 
-## Project Scaffold Checklist (.NET)
+## Project Scaffold Checklist (.NET baseline)
+
+Inherits the base checklist from `base-instructions.md`, plus:
 
 - [ ] `Directory.Build.props` with global compiler settings + `<Version>1.0.0</Version>`
 - [ ] `Directory.Packages.props` with central package versions
 - [ ] `.editorconfig` committed
 - [ ] `global.json` pinning SDK version
-- [ ] `CHANGELOG.md` with `[Unreleased]` section
 - [ ] `cliff.toml` for `git-cliff` changelog generation
 - [ ] `docker-compose.yml` + `docker-compose.override.yml`
 - [ ] `Dockerfile` multi-stage, non-root user, Alpine
-- [ ] `.github/copilot-instructions.md`
-- [ ] `CLAUDE.md`
-- [ ] `SKILL.md`
-- [ ] `README.md` with setup + migration commands
-- [ ] `/health` endpoints wired
+- [ ] `/health/live` and `/health/ready` endpoints wired
 - [ ] Serilog + OpenTelemetry bootstrapped
-- [ ] GitHub Actions workflow
-- [ ] Branch protection on `main`
+- [ ] `RequestLocalizationMiddleware` configured for `de` / `en`
+- [ ] GitHub Actions workflow for build + test + vulnerability scan
+
+Layer-specific additions live in the layer's own checklist.
 
 ---
 
-## Agent Guardrails (stack-specific additions)
+## Agent Guardrails (.NET baseline)
 
 In addition to the base guardrails:
 
@@ -558,7 +432,7 @@ In addition to the base guardrails:
 
 ### Never generate (this stack)
 
-- `async void` (except Blazor event handlers)
+- `async void` (except UI event handlers — see the Blazor layer)
 - `Task.Result` or `.GetAwaiter().GetResult()` — always `await`
 - Magic strings — use `const` or `nameof()`
 - Direct `HttpClient` instantiation — always via `IHttpClientFactory`
@@ -573,3 +447,180 @@ In addition to the base guardrails:
 - Generic `catch (Exception)` — use specific exception types
 - Missing `CancellationToken` on async methods that call external resources
 - `using` statements for namespaces already covered by `global using`
+
+---
+
+[//]: # (Stack layer — composed with .ai/stacks/_partials/dotnet-core.md by `scripts/build-stacks.sh` to produce .ai/stacks/dotnet-blazor.md. Do not edit the generated file directly.)
+
+# .NET Blazor Layer
+
+ASP.NET Core projects with a Blazor + MudBlazor UI (CSR, SSR, or both). Composed on top of the shared `dotnet-core` partial.
+
+---
+
+## Tech Stack (Blazor additions)
+
+| Layer | Technology |
+|---|---|
+| Frontend | Blazor CSR or SSR (per project) |
+| UI components | MudBlazor |
+| Component testing | bUnit |
+| End-to-end testing | Playwright |
+
+---
+
+## Blazor Conventions
+
+- CSR (WebAssembly) for full SPA, SSR for SEO-critical or auth-heavy pages
+- MudBlazor as the only component library — no mixing with other UI libs
+- Components in `src/Host/Components/` or per-module `Components/` folder
+- `@code` block kept minimal — extract logic to services or `ViewModel` classes
+- Use `[Parameter]` only for the public API of a component; internal state via fields
+- `EventCallback<T>` for child-to-parent communication
+
+### MudBlazor Conventions
+
+- Prefer MudBlazor components over raw HTML at all times
+- Use `MudDataGrid` for tabular data (not `MudTable` unless legacy)
+- Use `MudForm` + `MudTextField` / `MudSelect` for forms with validation
+- Use `MudDialog` for confirmations and modals (not custom overlays)
+- Use `MudSnackbar` for user feedback / toast messages
+- Use `MudSkeleton` for loading states
+- Layout: `MudLayout` → `MudAppBar` + `MudDrawer` + `MudMainContent`
+- Icons: use `Icons.Material.Filled.*` consistently
+
+### Component Conventions
+
+- One component per file
+- Component files: `PascalCase.razor`
+- Code-behind files: `PascalCase.razor.cs` (partial class)
+- Services injected via `@inject` or constructor in code-behind
+- No business logic in `.razor` files — only binding and UI events
+- Reuse components from `/src/Shared/` before creating new ones
+
+### State & Data Flow
+
+- Components do not call APIs directly — always go through a service
+- Services are registered in `Program.cs` with appropriate lifetime
+- Use `EventCallback` for child→parent communication
+- Use `CascadingParameter` only for truly global state (e.g. auth, theme)
+
+### UI workflow — stack-specific hints
+
+The phase order and gates are defined in `base-instructions.md`. For Blazor projects:
+
+- **Phase 1 (wireframe):** think in MudBlazor regions — `MudAppBar`, `MudDrawer`, `MudMainContent`, `MudDataGrid`, `MudForm`, `MudDialog`.
+- **Phase 2 (flow):** use MudBlazor component names in the component & state map.
+- **Phase 3 (build):** code-behind `.razor.cs` for all logic; use `MudSkeleton` / `MudProgressLinear` for loading, `MudSnackbar` for errors, `MudDialog` for destructive confirmations, `MudForm` + `DataAnnotations` for validation, `ma-*` / `pa-*` / `MudStack` / `MudGrid` for spacing.
+- **Phase 4 (review):** verify no raw HTML where a MudBlazor component exists; `MudDataGrid` (not `MudTable`), `MudSnackbar` (not custom toast), `Icons.Material.Filled.*`, a bUnit test file exists for the component.
+
+---
+
+## Localization & Regional Formatting (Blazor additions)
+
+Server-side localization (RequestLocalization, culture resolution, fallback rules, `CurrentCulture` formatting) is covered by the `dotnet-core` partial. For Blazor / MudBlazor specifically:
+
+- UI strings go through `IStringLocalizer<T>` + `.resx` resources per `de` / `en`. Do not put translatable strings inline in `.razor` files.
+- MudBlazor pickers (`MudDatePicker`, `MudNumericField`, etc.) read `CurrentCulture` automatically — do not override per-component.
+- Provide a language switcher in the layout (`MudMenu` in `MudAppBar`) that writes the chosen language into the `.AspNetCore.Culture` cookie and reloads the page.
+
+---
+
+## Testing (Blazor additions)
+
+The unit-test conventions and test project layout baseline live in the `dotnet-core` partial. For Blazor projects, add:
+
+```
+tests/
+  <Module>.ComponentTests/    ← bUnit
+  E2E/                        ← Playwright
+```
+
+### Blazor component tests (bUnit)
+
+- Test components in isolation using `bUnit` + `Bunit.Web.AngleSharp`
+- Use `Ctx.RenderComponent<T>()` with parameter builders
+- Assert on rendered markup and component state
+- Mock services via `Ctx.Services.AddSingleton<IMyService>(mock)`
+- Test event handlers: `cut.Find("button").Click()` then assert resulting state
+- Test parameter changes: `cut.SetParametersAndRender(p => p.Add(x => x.Param, newValue))`
+- Test async lifecycle: `cut.WaitForState(() => condition)` for loading states
+
+```csharp
+public sealed class OrderListComponentTests : TestContext
+{
+    [Fact]
+    public void OrderList_WithOrders_RendersOrderRows()
+    {
+        // Arrange
+        Services.AddSingleton(Substitute.For<IOrderService>());
+
+        // Act
+        var cut = RenderComponent<OrderList>(p =>
+            p.Add(c => c.Orders, [new OrderDto(Guid.NewGuid(), "Pending")]));
+
+        // Assert
+        cut.FindAll("tr.order-row").Should().HaveCount(1);
+    }
+}
+```
+
+### E2E tests (Playwright)
+
+- Tests in `tests/E2E/`
+- Use `Microsoft.Playwright.NUnit` or an xUnit wrapper
+- Page Object Model (POM) pattern — no raw selectors in test methods
+- Tests must be independent and idempotent (seed + teardown own data)
+- Run against the `docker-compose` stack in CI
+
+```csharp
+public sealed class OrderCreationTests : PageTest
+{
+    [Test]
+    public async Task CreateOrder_ValidInput_ShowsConfirmation()
+    {
+        var page = new OrderPage(Page);
+        await page.GotoAsync();
+        await page.FillOrderFormAsync(customerId: "test-001");
+        await page.SubmitAsync();
+        await Expect(page.ConfirmationBanner).ToBeVisibleAsync();
+    }
+}
+```
+
+### CI addition
+
+```yaml
+e2e:
+  needs: docker
+  - docker-compose up -d
+  - dotnet test tests/E2E
+  - docker-compose down
+```
+
+---
+
+## Project Scaffold Checklist (Blazor additions)
+
+Inherits the `dotnet-core` checklist, plus:
+
+- [ ] `MudBlazor` registered in `Program.cs` (`AddMudServices()`)
+- [ ] Component test project (`<Module>.ComponentTests`) using bUnit
+- [ ] E2E project (`tests/E2E`) using Playwright, wired into CI behind the docker stack
+- [ ] Language switcher (`MudMenu` in `MudAppBar`) wired to the `.AspNetCore.Culture` cookie
+- [ ] `IStringLocalizer<T>` + `.resx` resources seeded for `de` and `en`
+
+---
+
+## Agent Guardrails (Blazor additions)
+
+In addition to the base and `dotnet-core` guardrails:
+
+- Do not mix UI component libraries — MudBlazor is the only one
+- Do not put business logic in `.razor` files — extract to code-behind, services, or view models
+- Do not put translatable strings inline in `.razor` files — use `IStringLocalizer<T>`
+- Do not call APIs directly from a component — always go through a registered service
+- Do not use `MudTable` for new tabular data — use `MudDataGrid`
+- Do not use custom toast / overlay widgets — use `MudSnackbar` and `MudDialog`
+- Do not skip a bUnit test when adding or materially changing a component
+- `async void` is allowed only on Blazor event handlers — never elsewhere

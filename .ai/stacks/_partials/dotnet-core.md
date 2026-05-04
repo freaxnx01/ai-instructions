@@ -8,19 +8,9 @@ Shared baseline for every .NET stack overlay. Composed with a layer file (`dotne
 
 ## Tech Stack (.NET baseline)
 
-| Layer | Technology |
-|---|---|
-| Runtime | .NET 10 / C# |
-| Backend | ASP.NET Core, Minimal API |
-| ORM | Entity Framework Core |
-| DB (small) | SQLite |
-| DB (non-small) | PostgreSQL |
-| Validation | FluentValidation |
-| Logging | Serilog with structured output |
-| Observability | OpenTelemetry (traces + metrics) |
-| API docs | OpenAPI + Scalar |
-| Containerization | Docker + docker-compose (Alpine base images) |
-| Unit / integration testing | xUnit + FluentAssertions + NSubstitute |
+.NET 10 / C# · ASP.NET Core Minimal API · EF Core (SQLite small / PostgreSQL non-small) · FluentValidation · Serilog · OpenTelemetry · OpenAPI + Scalar · Docker + docker-compose (Alpine) · xUnit + FluentAssertions + NSubstitute.
+
+Full table: [`.ai/references/dotnet/tech-stack.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/tech-stack.md)
 
 ---
 
@@ -31,58 +21,15 @@ Shared baseline for every .NET stack overlay. Composed with a layer file (`dotne
 - Modules communicate via in-process interfaces — never direct project references across modules
 - Shared kernel in `src/Shared/` for cross-cutting types only
 - Modules register their own DI services via `IServiceCollection` extension methods
+- Apply Hexagonal (Ports & Adapters) inside a module when it has multiple infrastructure adapters (e.g. REST + messaging) or needs strong testability isolation
 
-```
-src/
-  Modules/
-    Orders/
-      Domain/
-      Application/
-      Infrastructure/
-    Catalog/
-      Domain/
-      Application/
-      Infrastructure/
-  Shared/
-  Host/           ← ASP.NET Core entry point, wires modules
-```
-
-### Hexagonal (Ports & Adapters) within a module
-
-Apply when a module has multiple infrastructure adapters (e.g. REST + messaging) or needs strong testability isolation.
-
-```
-<Module>/
-  Domain/           ← pure domain logic, no dependencies
-  Application/
-    Ports/
-      Driving/      ← IOrderService (inbound)
-      Driven/       ← IOrderRepository (outbound)
-    UseCases/
-  Infrastructure/
-    Adapters/
-      Persistence/
-      Http/
-      Messaging/
-```
+Directory layouts (modular-monolith and hexagonal): [`.ai/references/dotnet/architecture-layout.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/architecture-layout.md)
 
 ---
 
 ## C# Conventions
 
-```xml
-<!-- Directory.Build.props — applies to all projects -->
-<PropertyGroup>
-  <TargetFramework>net10.0</TargetFramework>
-  <Nullable>enable</Nullable>
-  <ImplicitUsings>enable</ImplicitUsings>
-  <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-  <AnalysisLevel>latest-recommended</AnalysisLevel>
-  <DebugType>embedded</DebugType>
-  <DebugSymbols>true</DebugSymbols>
-</PropertyGroup>
-```
+`Directory.Build.props` at repo root pins (mandatory): `TargetFramework=net10.0`, `Nullable=enable`, `ImplicitUsings=enable`, `TreatWarningsAsErrors=true`, `EnforceCodeStyleInBuild=true`, `AnalysisLevel=latest-recommended`, `DebugType=embedded`, `DebugSymbols=true`. Full file: [`.ai/references/dotnet/directory-build-props.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/directory-build-props.md)
 
 - File-scoped namespaces always
 - `global using` for framework namespaces in each project
@@ -110,22 +57,7 @@ Every ASP.NET Core project (whether it exposes a REST surface or just a few endp
 - Error responses are always `ProblemDetails` (RFC 9457) — never raw strings, anonymous error objects, or HTML error pages
 - OpenAPI via `Microsoft.AspNetCore.OpenApi`; Scalar UI mounted at `/scalar`
 
-```csharp
-public static class OrderEndpoints
-{
-    public static IEndpointRouteBuilder MapOrderEndpoints(this IEndpointRouteBuilder app)
-    {
-        var group = app.MapGroup("/api/orders")
-                       .WithTags("Orders")
-                       .WithOpenApi();
-
-        group.MapPost("/", CreateOrderAsync).WithName("CreateOrder");
-        group.MapGet("/{id:guid}", GetOrderByIdAsync).WithName("GetOrderById");
-
-        return app;
-    }
-}
-```
+Scaffold: [`.ai/references/dotnet/endpoint-group.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/endpoint-group.md)
 
 ---
 
@@ -138,23 +70,7 @@ public static class OrderEndpoints
 - Always use `AsNoTracking()` for read-only queries
 - Seed data via `IEntityTypeConfiguration.HasData()` or a dedicated seeder run at startup
 
-```bash
-# Add migration (run from repo root)
-dotnet ef migrations add <MigrationName> \
-  --project src/Modules/<Module>/Infrastructure \
-  --startup-project src/Host
-
-# Apply
-dotnet ef database update \
-  --project src/Modules/<Module>/Infrastructure \
-  --startup-project src/Host
-
-# Generate SQL script (for production review)
-dotnet ef migrations script \
-  --project src/Modules/<Module>/Infrastructure \
-  --startup-project src/Host \
-  --output migrations.sql
-```
+CLI scaffold: [`.ai/references/dotnet/ef-core-cli.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/ef-core-cli.md)
 
 ---
 
@@ -162,24 +78,12 @@ dotnet ef migrations script \
 
 Base rules for `de` / `en` support and regional formatting live in `base-instructions.md`. For every ASP.NET Core project on this stack:
 
-- Configure `RequestLocalizationMiddleware` in `Program.cs`:
-  ```csharp
-  var supportedCultures = new[] { "de-CH", "de-DE", "de-AT", "en-US", "en-GB" }
-      .Select(c => new CultureInfo(c)).ToList();
-  var supportedUICultures = new[] { "de", "en" }
-      .Select(c => new CultureInfo(c)).ToList();
-
-  app.UseRequestLocalization(new RequestLocalizationOptions
-  {
-      DefaultRequestCulture = new RequestCulture("de-CH", "de"),
-      SupportedCultures = supportedCultures,
-      SupportedUICultures = supportedUICultures,
-      ApplyCurrentCultureToResponseHeaders = true,
-  });
-  ```
+- Configure `RequestLocalizationMiddleware` in `Program.cs` with supported cultures `de-CH, de-DE, de-AT, en-US, en-GB` and default `de-CH` / `de`
 - Culture resolution order: cookie (`.AspNetCore.Culture`) → `Accept-Language` header → default (`de-CH` / `de`)
 - For language `de` with no recognized region (or a `de-*` region not in `SupportedCultures`), fall back to `de-CH` — never `de-DE`
 - Format dates / numbers / currency via `CurrentCulture` — never `string.Format` with a hardcoded culture or `CultureInfo.InvariantCulture` for user-visible text
+
+Middleware scaffold: [`.ai/references/dotnet/request-localization.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/request-localization.md)
 
 UI-specific localization rules (resource files for component strings, picker behaviour, language-switcher widgets) live in the Blazor layer.
 
@@ -208,29 +112,7 @@ Layer-specific test projects (Blazor component tests, Playwright E2E, API integr
 - No `[Fact]` with logic — use `[Theory]` + `[InlineData]` / `[MemberData]`
 - After implementation, run the full test suite (`dotnet test`) — not just the new test
 
-```csharp
-public sealed class CreateOrderHandlerTests
-{
-    private readonly IOrderRepository _repository = Substitute.For<IOrderRepository>();
-    private readonly CreateOrderHandler _sut;
-
-    public CreateOrderHandlerTests() => _sut = new CreateOrderHandler(_repository);
-
-    [Fact]
-    public async Task Handle_ValidCommand_CreatesAndPersistsOrder()
-    {
-        // Arrange
-        var command = new CreateOrderCommand(CustomerId: Guid.NewGuid(), Items: []);
-
-        // Act
-        var result = await _sut.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        await _repository.Received(1).AddAsync(Arg.Any<Order>(), Arg.Any<CancellationToken>());
-    }
-}
-```
+Test class scaffold: [`.ai/references/dotnet/xunit-example.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/xunit-example.md)
 
 ---
 
@@ -262,53 +144,13 @@ dotnet list package --outdated
 
 ## Essential Make Targets
 
-Projects using this stack should ship a repo-root `Makefile` standardizing the common commands. The recipe bodies may use project-local variables (`$(SLN)`, `$(API_DIR)`, `$(PROPS_FILE)`, `$(COMPOSE)`) but the target names are canonical.
+Projects using this stack ship a repo-root `Makefile` standardizing the common commands. Target names are canonical; recipe bodies may use project-local variables.
 
-A reference implementation lives at [`.ai/examples/dotnet/Makefile`](../examples/dotnet/Makefile) — copy it to your repo root and customize the top-of-file variables. Host/tool/project-specific targets (`run-edge`, `release-notes`, `package`) ship as stubs with per-OS examples in comments.
+Canonical targets exist for: build/run (`build`, `watch`, `run-edge`), testing (`test`, `test-unit`, `test-coverage`), Docker Compose (`docker-run`, `up`, `down`, `logs`, `rebuild`), quality (`lint`, `outdated`, `vuln`), versioning (`version`, `version-set`, `bump-major|minor|patch`, `bump-auto`), release (`changelog`, `release-notes`, `release`, `release-auto`, `push-release`, `package`), and `clean`. Document each target with an inline `## <description>` comment and expose a `help` target that greps them.
 
-Document each target with an inline `## <description>` comment and expose a `help` target that greps them.
+A reference Makefile lives at `.ai/examples/dotnet/Makefile` — copy it and customize the top-of-file variables. Host/tool/project-specific targets (`run-edge`, `release-notes`, `package`) ship as stubs with per-OS examples in comments.
 
-### Build & run
-- `build` — build the solution in Release mode
-- `watch` — run the API with hot reload (`dotnet watch`)
-- `run-edge` — start the frontend and open it in the developer's preferred browser
-  *Recipe is host-specific (Windows/WSL: powershell + msedge; macOS: `open -a Safari`; Linux: `xdg-open`). Standardize the target name; leave the body to each project.*
-
-### Testing
-- `test` — run every test project in the solution
-- `test-unit` — run unit test projects only (iterate a `TEST_UNIT_PROJECTS` list)
-- `test-coverage` — run tests with `--collect:"XPlat Code Coverage" --results-directory ./coverage`
-
-### Docker (Compose)
-- `docker-run` — `compose up --build` in the foreground
-- `up` — `compose up -d --build`
-- `down` — `compose down`
-- `logs` — `compose logs -f`
-- `rebuild` — `down` + `up`
-
-### Quality
-- `lint` — `dotnet format --verify-no-changes`
-- `outdated` — `dotnet list package --outdated`
-- `vuln` — `dotnet list package --vulnerable --include-transitive`
-
-### Versioning (single source of truth: `Directory.Build.props` → `<Version>`)
-- `version` — print current version
-- `version-set V=X.Y.Z` — set version explicitly
-- `bump-major` / `bump-minor` / `bump-patch` — SemVer bumps via `sed` on `Directory.Build.props`
-- `bump-auto` — derive next version from Conventional Commits via `git-cliff --bumped-version`; refuse major bumps (require explicit `bump-major`)
-
-### Release
-- `changelog` — `git-cliff --output CHANGELOG.md`
-- `release-notes` — generate user-friendly release notes for the current version
-  *Recipe is tool-specific (Claude Code, Copilot CLI, llm CLI, OpenAI, hand-rolled). Standardize the target name; leave the body to each project.*
-- `release` — tag `v$(VERSION)`, regenerate `CHANGELOG.md`, invoke `release-notes`, commit, tag (no auto-push)
-- `release-auto` — `bump-auto` + `release` in one step
-- `push-release` — `git push origin main "v$(VERSION)"` (run only after `release` succeeds)
-- `package` — build a distributable artifact (ZIP / tarball / image) and deliver to the project's drop location
-  *Recipe is project-specific (artifact format, drop location, signing). Standardize the target name; leave the body to each project.*
-
-### Cleanup
-- `clean` — remove `bin/`, `obj/`, `publish/` trees and `./coverage/`
+Full target list with descriptions: [`.ai/references/dotnet/makefile-targets.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/makefile-targets.md)
 
 ---
 
@@ -322,19 +164,7 @@ Document each target with an inline `## <description>` comment and expose a `hel
 - `docker-compose.override.yml` — local dev overrides (ports, volumes, hot-reload)
 - Secrets via environment variables or Docker secrets — **never in image or appsettings**
 
-```dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
-WORKDIR /src
-COPY . .
-RUN dotnet publish src/Host -c Release -o /app/publish --no-self-contained
-
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
-WORKDIR /app
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-COPY --from=build /app/publish .
-USER appuser
-ENTRYPOINT ["dotnet", "Host.dll"]
-```
+Dockerfile scaffold: [`.ai/references/dotnet/dockerfile.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/dockerfile.md)
 
 ---
 
@@ -379,43 +209,17 @@ Base rules (SemVer, Conventional Commits → bump mapping, git-cliff) live in `b
 
 ## CI/CD (GitHub Actions baseline)
 
-Pipeline stages: `build` → `test` → `security-scan` → `docker-build` → `push`
-
-```yaml
-jobs:
-  build-and-test:
-    - dotnet restore
-    - dotnet build --no-restore -c Release
-    - dotnet test --no-build --collect:"XPlat Code Coverage"
-    - dotnet list package --vulnerable --fail-on-severity high
-
-  docker:
-    needs: build-and-test
-    - docker build
-    - docker push (on main only)
-```
+Pipeline stages: `build` → `test` → `security-scan` → `docker-build` → `push`. Build and test run on every PR; vulnerable-dependency scan fails the build on HIGH/CRITICAL; container image built and pushed only on `main` after tests pass.
 
 Layer-specific CI jobs (E2E with Playwright for Blazor, k6 perf smoke for WebAPI) are added by the layer overlay.
+
+Workflow scaffold: [`.ai/references/dotnet/github-actions.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/github-actions.md)
 
 ---
 
 ## Project Scaffold Checklist (.NET baseline)
 
-Inherits the base checklist from `base-instructions.md`, plus:
-
-- [ ] `Directory.Build.props` with global compiler settings + `<Version>1.0.0</Version>`
-- [ ] `Directory.Packages.props` with central package versions
-- [ ] `.editorconfig` committed
-- [ ] `global.json` pinning SDK version
-- [ ] `cliff.toml` for `git-cliff` changelog generation
-- [ ] `docker-compose.yml` + `docker-compose.override.yml`
-- [ ] `Dockerfile` multi-stage, non-root user, Alpine
-- [ ] `/health/live` and `/health/ready` endpoints wired
-- [ ] Serilog + OpenTelemetry bootstrapped
-- [ ] `RequestLocalizationMiddleware` configured for `de` / `en`
-- [ ] GitHub Actions workflow for build + test + vulnerability scan
-
-Layer-specific additions live in the layer's own checklist.
+.NET-specific init-time checklist (inherits the base checklist) lives at [`.ai/references/scaffold-checklists.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/scaffold-checklists.md) under "**.NET baseline**". Layer additions are in the same file.
 
 ---
 

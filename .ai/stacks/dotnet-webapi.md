@@ -10,19 +10,9 @@ Shared baseline for every .NET stack overlay. Composed with a layer file (`dotne
 
 ## Tech Stack (.NET baseline)
 
-| Layer | Technology |
-|---|---|
-| Runtime | .NET 10 / C# |
-| Backend | ASP.NET Core, Minimal API |
-| ORM | Entity Framework Core |
-| DB (small) | SQLite |
-| DB (non-small) | PostgreSQL |
-| Validation | FluentValidation |
-| Logging | Serilog with structured output |
-| Observability | OpenTelemetry (traces + metrics) |
-| API docs | OpenAPI + Scalar |
-| Containerization | Docker + docker-compose (Alpine base images) |
-| Unit / integration testing | xUnit + FluentAssertions + NSubstitute |
+.NET 10 / C# · ASP.NET Core Minimal API · EF Core (SQLite small / PostgreSQL non-small) · FluentValidation · Serilog · OpenTelemetry · OpenAPI + Scalar · Docker + docker-compose (Alpine) · xUnit + FluentAssertions + NSubstitute.
+
+Full table: [`.ai/references/dotnet/tech-stack.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/tech-stack.md)
 
 ---
 
@@ -33,58 +23,15 @@ Shared baseline for every .NET stack overlay. Composed with a layer file (`dotne
 - Modules communicate via in-process interfaces — never direct project references across modules
 - Shared kernel in `src/Shared/` for cross-cutting types only
 - Modules register their own DI services via `IServiceCollection` extension methods
+- Apply Hexagonal (Ports & Adapters) inside a module when it has multiple infrastructure adapters (e.g. REST + messaging) or needs strong testability isolation
 
-```
-src/
-  Modules/
-    Orders/
-      Domain/
-      Application/
-      Infrastructure/
-    Catalog/
-      Domain/
-      Application/
-      Infrastructure/
-  Shared/
-  Host/           ← ASP.NET Core entry point, wires modules
-```
-
-### Hexagonal (Ports & Adapters) within a module
-
-Apply when a module has multiple infrastructure adapters (e.g. REST + messaging) or needs strong testability isolation.
-
-```
-<Module>/
-  Domain/           ← pure domain logic, no dependencies
-  Application/
-    Ports/
-      Driving/      ← IOrderService (inbound)
-      Driven/       ← IOrderRepository (outbound)
-    UseCases/
-  Infrastructure/
-    Adapters/
-      Persistence/
-      Http/
-      Messaging/
-```
+Directory layouts (modular-monolith and hexagonal): [`.ai/references/dotnet/architecture-layout.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/architecture-layout.md)
 
 ---
 
 ## C# Conventions
 
-```xml
-<!-- Directory.Build.props — applies to all projects -->
-<PropertyGroup>
-  <TargetFramework>net10.0</TargetFramework>
-  <Nullable>enable</Nullable>
-  <ImplicitUsings>enable</ImplicitUsings>
-  <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-  <AnalysisLevel>latest-recommended</AnalysisLevel>
-  <DebugType>embedded</DebugType>
-  <DebugSymbols>true</DebugSymbols>
-</PropertyGroup>
-```
+`Directory.Build.props` at repo root pins (mandatory): `TargetFramework=net10.0`, `Nullable=enable`, `ImplicitUsings=enable`, `TreatWarningsAsErrors=true`, `EnforceCodeStyleInBuild=true`, `AnalysisLevel=latest-recommended`, `DebugType=embedded`, `DebugSymbols=true`. Full file: [`.ai/references/dotnet/directory-build-props.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/directory-build-props.md)
 
 - File-scoped namespaces always
 - `global using` for framework namespaces in each project
@@ -112,22 +59,7 @@ Every ASP.NET Core project (whether it exposes a REST surface or just a few endp
 - Error responses are always `ProblemDetails` (RFC 9457) — never raw strings, anonymous error objects, or HTML error pages
 - OpenAPI via `Microsoft.AspNetCore.OpenApi`; Scalar UI mounted at `/scalar`
 
-```csharp
-public static class OrderEndpoints
-{
-    public static IEndpointRouteBuilder MapOrderEndpoints(this IEndpointRouteBuilder app)
-    {
-        var group = app.MapGroup("/api/orders")
-                       .WithTags("Orders")
-                       .WithOpenApi();
-
-        group.MapPost("/", CreateOrderAsync).WithName("CreateOrder");
-        group.MapGet("/{id:guid}", GetOrderByIdAsync).WithName("GetOrderById");
-
-        return app;
-    }
-}
-```
+Scaffold: [`.ai/references/dotnet/endpoint-group.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/endpoint-group.md)
 
 ---
 
@@ -140,23 +72,7 @@ public static class OrderEndpoints
 - Always use `AsNoTracking()` for read-only queries
 - Seed data via `IEntityTypeConfiguration.HasData()` or a dedicated seeder run at startup
 
-```bash
-# Add migration (run from repo root)
-dotnet ef migrations add <MigrationName> \
-  --project src/Modules/<Module>/Infrastructure \
-  --startup-project src/Host
-
-# Apply
-dotnet ef database update \
-  --project src/Modules/<Module>/Infrastructure \
-  --startup-project src/Host
-
-# Generate SQL script (for production review)
-dotnet ef migrations script \
-  --project src/Modules/<Module>/Infrastructure \
-  --startup-project src/Host \
-  --output migrations.sql
-```
+CLI scaffold: [`.ai/references/dotnet/ef-core-cli.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/ef-core-cli.md)
 
 ---
 
@@ -164,24 +80,12 @@ dotnet ef migrations script \
 
 Base rules for `de` / `en` support and regional formatting live in `base-instructions.md`. For every ASP.NET Core project on this stack:
 
-- Configure `RequestLocalizationMiddleware` in `Program.cs`:
-  ```csharp
-  var supportedCultures = new[] { "de-CH", "de-DE", "de-AT", "en-US", "en-GB" }
-      .Select(c => new CultureInfo(c)).ToList();
-  var supportedUICultures = new[] { "de", "en" }
-      .Select(c => new CultureInfo(c)).ToList();
-
-  app.UseRequestLocalization(new RequestLocalizationOptions
-  {
-      DefaultRequestCulture = new RequestCulture("de-CH", "de"),
-      SupportedCultures = supportedCultures,
-      SupportedUICultures = supportedUICultures,
-      ApplyCurrentCultureToResponseHeaders = true,
-  });
-  ```
+- Configure `RequestLocalizationMiddleware` in `Program.cs` with supported cultures `de-CH, de-DE, de-AT, en-US, en-GB` and default `de-CH` / `de`
 - Culture resolution order: cookie (`.AspNetCore.Culture`) → `Accept-Language` header → default (`de-CH` / `de`)
 - For language `de` with no recognized region (or a `de-*` region not in `SupportedCultures`), fall back to `de-CH` — never `de-DE`
 - Format dates / numbers / currency via `CurrentCulture` — never `string.Format` with a hardcoded culture or `CultureInfo.InvariantCulture` for user-visible text
+
+Middleware scaffold: [`.ai/references/dotnet/request-localization.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/request-localization.md)
 
 UI-specific localization rules (resource files for component strings, picker behaviour, language-switcher widgets) live in the Blazor layer.
 
@@ -210,29 +114,7 @@ Layer-specific test projects (Blazor component tests, Playwright E2E, API integr
 - No `[Fact]` with logic — use `[Theory]` + `[InlineData]` / `[MemberData]`
 - After implementation, run the full test suite (`dotnet test`) — not just the new test
 
-```csharp
-public sealed class CreateOrderHandlerTests
-{
-    private readonly IOrderRepository _repository = Substitute.For<IOrderRepository>();
-    private readonly CreateOrderHandler _sut;
-
-    public CreateOrderHandlerTests() => _sut = new CreateOrderHandler(_repository);
-
-    [Fact]
-    public async Task Handle_ValidCommand_CreatesAndPersistsOrder()
-    {
-        // Arrange
-        var command = new CreateOrderCommand(CustomerId: Guid.NewGuid(), Items: []);
-
-        // Act
-        var result = await _sut.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        await _repository.Received(1).AddAsync(Arg.Any<Order>(), Arg.Any<CancellationToken>());
-    }
-}
-```
+Test class scaffold: [`.ai/references/dotnet/xunit-example.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/xunit-example.md)
 
 ---
 
@@ -264,53 +146,13 @@ dotnet list package --outdated
 
 ## Essential Make Targets
 
-Projects using this stack should ship a repo-root `Makefile` standardizing the common commands. The recipe bodies may use project-local variables (`$(SLN)`, `$(API_DIR)`, `$(PROPS_FILE)`, `$(COMPOSE)`) but the target names are canonical.
+Projects using this stack ship a repo-root `Makefile` standardizing the common commands. Target names are canonical; recipe bodies may use project-local variables.
 
-A reference implementation lives at [`.ai/examples/dotnet/Makefile`](../examples/dotnet/Makefile) — copy it to your repo root and customize the top-of-file variables. Host/tool/project-specific targets (`run-edge`, `release-notes`, `package`) ship as stubs with per-OS examples in comments.
+Canonical targets exist for: build/run (`build`, `watch`, `run-edge`), testing (`test`, `test-unit`, `test-coverage`), Docker Compose (`docker-run`, `up`, `down`, `logs`, `rebuild`), quality (`lint`, `outdated`, `vuln`), versioning (`version`, `version-set`, `bump-major|minor|patch`, `bump-auto`), release (`changelog`, `release-notes`, `release`, `release-auto`, `push-release`, `package`), and `clean`. Document each target with an inline `## <description>` comment and expose a `help` target that greps them.
 
-Document each target with an inline `## <description>` comment and expose a `help` target that greps them.
+A reference Makefile lives at `.ai/examples/dotnet/Makefile` — copy it and customize the top-of-file variables. Host/tool/project-specific targets (`run-edge`, `release-notes`, `package`) ship as stubs with per-OS examples in comments.
 
-### Build & run
-- `build` — build the solution in Release mode
-- `watch` — run the API with hot reload (`dotnet watch`)
-- `run-edge` — start the frontend and open it in the developer's preferred browser
-  *Recipe is host-specific (Windows/WSL: powershell + msedge; macOS: `open -a Safari`; Linux: `xdg-open`). Standardize the target name; leave the body to each project.*
-
-### Testing
-- `test` — run every test project in the solution
-- `test-unit` — run unit test projects only (iterate a `TEST_UNIT_PROJECTS` list)
-- `test-coverage` — run tests with `--collect:"XPlat Code Coverage" --results-directory ./coverage`
-
-### Docker (Compose)
-- `docker-run` — `compose up --build` in the foreground
-- `up` — `compose up -d --build`
-- `down` — `compose down`
-- `logs` — `compose logs -f`
-- `rebuild` — `down` + `up`
-
-### Quality
-- `lint` — `dotnet format --verify-no-changes`
-- `outdated` — `dotnet list package --outdated`
-- `vuln` — `dotnet list package --vulnerable --include-transitive`
-
-### Versioning (single source of truth: `Directory.Build.props` → `<Version>`)
-- `version` — print current version
-- `version-set V=X.Y.Z` — set version explicitly
-- `bump-major` / `bump-minor` / `bump-patch` — SemVer bumps via `sed` on `Directory.Build.props`
-- `bump-auto` — derive next version from Conventional Commits via `git-cliff --bumped-version`; refuse major bumps (require explicit `bump-major`)
-
-### Release
-- `changelog` — `git-cliff --output CHANGELOG.md`
-- `release-notes` — generate user-friendly release notes for the current version
-  *Recipe is tool-specific (Claude Code, Copilot CLI, llm CLI, OpenAI, hand-rolled). Standardize the target name; leave the body to each project.*
-- `release` — tag `v$(VERSION)`, regenerate `CHANGELOG.md`, invoke `release-notes`, commit, tag (no auto-push)
-- `release-auto` — `bump-auto` + `release` in one step
-- `push-release` — `git push origin main "v$(VERSION)"` (run only after `release` succeeds)
-- `package` — build a distributable artifact (ZIP / tarball / image) and deliver to the project's drop location
-  *Recipe is project-specific (artifact format, drop location, signing). Standardize the target name; leave the body to each project.*
-
-### Cleanup
-- `clean` — remove `bin/`, `obj/`, `publish/` trees and `./coverage/`
+Full target list with descriptions: [`.ai/references/dotnet/makefile-targets.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/makefile-targets.md)
 
 ---
 
@@ -324,19 +166,7 @@ Document each target with an inline `## <description>` comment and expose a `hel
 - `docker-compose.override.yml` — local dev overrides (ports, volumes, hot-reload)
 - Secrets via environment variables or Docker secrets — **never in image or appsettings**
 
-```dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
-WORKDIR /src
-COPY . .
-RUN dotnet publish src/Host -c Release -o /app/publish --no-self-contained
-
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
-WORKDIR /app
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-COPY --from=build /app/publish .
-USER appuser
-ENTRYPOINT ["dotnet", "Host.dll"]
-```
+Dockerfile scaffold: [`.ai/references/dotnet/dockerfile.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/dockerfile.md)
 
 ---
 
@@ -381,43 +211,17 @@ Base rules (SemVer, Conventional Commits → bump mapping, git-cliff) live in `b
 
 ## CI/CD (GitHub Actions baseline)
 
-Pipeline stages: `build` → `test` → `security-scan` → `docker-build` → `push`
-
-```yaml
-jobs:
-  build-and-test:
-    - dotnet restore
-    - dotnet build --no-restore -c Release
-    - dotnet test --no-build --collect:"XPlat Code Coverage"
-    - dotnet list package --vulnerable --fail-on-severity high
-
-  docker:
-    needs: build-and-test
-    - docker build
-    - docker push (on main only)
-```
+Pipeline stages: `build` → `test` → `security-scan` → `docker-build` → `push`. Build and test run on every PR; vulnerable-dependency scan fails the build on HIGH/CRITICAL; container image built and pushed only on `main` after tests pass.
 
 Layer-specific CI jobs (E2E with Playwright for Blazor, k6 perf smoke for WebAPI) are added by the layer overlay.
+
+Workflow scaffold: [`.ai/references/dotnet/github-actions.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/github-actions.md)
 
 ---
 
 ## Project Scaffold Checklist (.NET baseline)
 
-Inherits the base checklist from `base-instructions.md`, plus:
-
-- [ ] `Directory.Build.props` with global compiler settings + `<Version>1.0.0</Version>`
-- [ ] `Directory.Packages.props` with central package versions
-- [ ] `.editorconfig` committed
-- [ ] `global.json` pinning SDK version
-- [ ] `cliff.toml` for `git-cliff` changelog generation
-- [ ] `docker-compose.yml` + `docker-compose.override.yml`
-- [ ] `Dockerfile` multi-stage, non-root user, Alpine
-- [ ] `/health/live` and `/health/ready` endpoints wired
-- [ ] Serilog + OpenTelemetry bootstrapped
-- [ ] `RequestLocalizationMiddleware` configured for `de` / `en`
-- [ ] GitHub Actions workflow for build + test + vulnerability scan
-
-Layer-specific additions live in the layer's own checklist.
+.NET-specific init-time checklist (inherits the base checklist) lives at [`.ai/references/scaffold-checklists.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/scaffold-checklists.md) under "**.NET baseline**". Layer additions are in the same file.
 
 ---
 
@@ -460,17 +264,9 @@ Backend-only ASP.NET Core REST API projects (no Blazor, no UI). Composed on top 
 
 ## Tech Stack (WebAPI additions)
 
-| Layer | Technology |
-|---|---|
-| API style | REST · ASP.NET Core Minimal API |
-| API versioning | `Asp.Versioning.Http` (URL-segment) |
-| Authentication | One of: pass-through · API key (`X-API-Key`) · JWT bearer — **single scheme per project** |
-| Error responses | `ProblemDetails` (RFC 9457) |
-| API docs | `Microsoft.AspNetCore.OpenApi` + Scalar UI at `/scalar` |
-| Manual / exploratory | Bruno (collections in `bruno/`) |
-| Integration testing | xUnit + `WebApplicationFactory` + Testcontainers |
-| Performance / load testing | k6 (scripts in `perf/`) |
-| Client SDK generation | Kiota |
+REST · ASP.NET Core Minimal API · `Asp.Versioning.Http` (URL-segment) · auth: pass-through / API-key / JWT (single scheme per project) · `ProblemDetails` (RFC 9457) · OpenAPI + Scalar at `/scalar` · Bruno · `WebApplicationFactory` + Testcontainers · k6 · Kiota.
+
+Full table: [`.ai/references/dotnet/tech-stack.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/tech-stack.md)
 
 ---
 
@@ -481,23 +277,7 @@ Backend-only ASP.NET Core REST API projects (no Blazor, no UI). Composed on top 
 - One handler per file when the body is non-trivial; inline lambdas only for true one-liners
 - FluentValidation runs at the boundary, before any handler logic
 
-```csharp
-public static class OrderEndpoints
-{
-    public static IEndpointRouteBuilder MapOrderEndpoints(this IEndpointRouteBuilder app)
-    {
-        var group = app.MapGroup("/api/v{version:apiVersion}/orders")
-                       .WithTags("Orders")
-                       .WithOpenApi()
-                       .HasApiVersion(1.0);
-
-        group.MapPost("/", CreateOrderAsync).WithName("CreateOrder");
-        group.MapGet("/{id:guid}", GetOrderByIdAsync).WithName("GetOrderById");
-
-        return app;
-    }
-}
-```
+Endpoint group scaffold: [`.ai/references/dotnet/endpoint-group.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/endpoint-group.md) (use the versioned route variant)
 
 ### HTTP status code conventions
 
@@ -525,14 +305,11 @@ Per RFC 7231 / 9110, GET request bodies have no defined semantics. Servers, prox
 
 ### Errors — always ProblemDetails
 
-```csharp
-builder.Services.AddProblemDetails();
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-```
-
 - Every error response — including those produced by middleware and model binding — is RFC 9457 `ProblemDetails`
 - Never return raw strings, anonymous `{ error: "..." }` objects, or HTML error pages
 - Populate `type`, `title`, `status`, `detail`, `instance` on every response; add a `traceId` extension keyed on the current `Activity.TraceId`
+
+Registration scaffold: [`.ai/references/dotnet-webapi/problem-details.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/problem-details.md)
 
 ---
 
@@ -540,83 +317,35 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 Use `Asp.Versioning.Http` with **URL-segment** versioning. Format: `v1.0`, `v2.0`, `v2.1` — `MAJOR.MINOR`. The minor segment is part of the URL even when only the major bumps, so the URL shape stays consistent across the lifetime of the API.
 
-```csharp
-builder.Services.AddApiVersioning(options =>
-{
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.AssumeDefaultVersionWhenUnspecified = true;   // unversioned URLs → v1.0
-    options.ApiVersionReader = new UrlSegmentApiVersionReader();
-    options.ReportApiVersions = true;                     // emit api-supported-versions / api-deprecated-versions headers
-}).AddApiExplorer(options =>
-{
-    options.GroupNameFormat = "'v'VVV";                   // must produce "v{MAJOR}.{MINOR}" — verify against the installed Asp.Versioning version
-    options.SubstituteApiVersionInUrl = true;
-});
-```
-
 - **Unversioned URLs (`/api/orders/...`) are allowed only for backward compatibility.** They resolve to v1.0 explicitly — never to "latest". Rolling out v2.0 must not change what an unversioned caller hits.
 - Deprecate an endpoint with `.HasDeprecatedApiVersion(1.0)` plus a `Sunset: <RFC 7231 date>` header on responses.
 - Removal is a separate step from deprecation — no version is removed without an announced sunset window.
+
+Registration scaffold: [`.ai/references/dotnet-webapi/api-versioning.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/api-versioning.md)
 
 ---
 
 ## Authentication
 
-**One scheme per API project.** Do not mix schemes in the same service. The choice is made at project bootstrap and applies to every endpoint.
+**One scheme per API project.** Do not mix schemes in the same service. The choice is made at project bootstrap and applies to every endpoint. Three approved schemes:
 
-The three approved schemes:
+- **Pass-through** (BFF / wrapper APIs): forward incoming `Authorization` to upstream verbatim; do not validate, re-issue, decode, log, or transform; do not call `AddAuthentication()` here. If the project exposes non-proxied endpoints, it isn't pass-through.
+- **API key** (`X-API-Key`): header name exact, no query-string fallback; custom `AuthenticationHandler<ApiKeySchemeOptions>`; keys in secret store; constant-time compare via `CryptographicOperations.FixedTimeEquals`; accept a small rotating set, not a single value.
+- **JWT bearer**: `AddJwtBearer(...)`; validate issuer, audience, lifetime, signing key — never disable in any environment; authorize via named policies, not raw roles. This API **consumes** tokens; issuance belongs in a dedicated identity service.
 
-### 1. Pass-through (BFF / wrapper APIs)
+Cross-cutting:
 
-For projects that proxy or fan out to an upstream API, the upstream remains the source of authentication truth.
+- `[Authorize]` / `.RequireAuthorization()` is the default for API key + JWT projects; opt out per-endpoint with `[AllowAnonymous]`. Pass-through projects register no scheme.
+- Anonymous endpoints are limited to `/health/*`, `/scalar`, and the OpenAPI document.
+- Never log the `Authorization`, `Cookie`, or `X-API-Key` header.
 
-- Forward the incoming `Authorization` header verbatim to the upstream
-- Do **not** validate, re-issue, decode, log, or transform the bearer token in transit
-- Do not call `AddAuthentication()` for token validation in this project — auth lives upstream
-- If the project also exposes its own non-proxied endpoints, it isn't a pass-through project; pick a different scheme
-
-### 2. API key (`X-API-Key`)
-
-Header-based key validation for service-to-service traffic where JWT is overkill.
-
-- Header name is exactly `X-API-Key` — no alternatives, no query-string fallback
-- Validate via a custom `AuthenticationHandler<ApiKeySchemeOptions>`; never inline-check in the endpoint
-- Keys live in a secret store (env vars / Key Vault / Docker secret) — never in source, never in `appsettings.json`
-- Constant-time comparison only (`CryptographicOperations.FixedTimeEquals`)
-- Rotate keys without downtime by accepting a small set of valid keys, not a single value
-
-### 3. JWT bearer (token validation)
-
-For APIs consuming tokens issued elsewhere (Identity provider, OAuth2 / OIDC server).
-
-- `AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(...)`
-- Validate issuer, audience, lifetime, and signing key — never disable validation in any environment
-- Authorization decisions via `AddAuthorization` policies — endpoints reference policy names, not raw role strings
-- This API **consumes** tokens — token issuance belongs in a dedicated identity service, not here
-
-### Cross-cutting auth rules
-
-- `[Authorize]` (or `.RequireAuthorization()`) is the default for projects on the API key or JWT scheme; opt out individually with `[AllowAnonymous]`. Pass-through projects do not register an authentication scheme — the upstream enforces auth.
-- Anonymous endpoints are limited to `/health/*`, `/scalar`, and the OpenAPI document
-- Never log the `Authorization`, `Cookie`, or `X-API-Key` header (see HTTP logging below)
+Full per-scheme rules: [`.ai/references/dotnet-webapi/authentication-schemes.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/authentication-schemes.md)
 
 ---
 
 ## Pagination
 
-**Default to cursor-based** for new endpoints — offset pagination is unstable under concurrent inserts.
-
-```
-GET /api/v1.0/orders?pageSize=50&pageToken=<opaque>
-```
-
-Response:
-```json
-{
-  "items": [ ... ],
-  "nextPageToken": "<opaque>"   // null when exhausted
-}
-```
+**Default to cursor-based** for new endpoints — offset pagination is unstable under concurrent inserts. Request: `GET /api/v1.0/orders?pageSize=50&pageToken=<opaque>`. Response: `{ "items": [...], "nextPageToken": "<opaque>" }` (null when exhausted).
 
 - `pageToken` is opaque to the client — base64 of an internal cursor (`{lastId, lastCreatedAt}`), never a row offset
 - Maximum `pageSize` is bounded server-side; reject requests exceeding it with `400`
@@ -648,26 +377,11 @@ For mutable resources, surface the row version as an `ETag` and require `If-Matc
 
 ## Rate limiting
 
-```csharp
-builder.Services.AddRateLimiter(options =>
-{
-    options.AddPolicy("per-user", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Connection.RemoteIpAddress!.ToString(),
-            factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 100, Window = TimeSpan.FromMinutes(1) }));
-
-    options.OnRejected = async (ctx, ct) =>
-    {
-        ctx.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        ctx.HttpContext.Response.Headers.RetryAfter = "60";
-        await ctx.HttpContext.Response.WriteAsync("Rate limit exceeded.", ct);
-    };
-});
-```
-
 - Named policies per endpoint group — never a single global limit
 - Always emit `Retry-After` on `429`
 - Partition by authenticated principal first; fall back to remote IP only for anonymous endpoints
+
+Registration scaffold: [`.ai/references/dotnet-webapi/rate-limiting.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/rate-limiting.md)
 
 ---
 
@@ -682,83 +396,35 @@ builder.Services.AddRateLimiter(options =>
 
 ## HTTP logging
 
-```csharp
-builder.Services.AddHttpLogging(options =>
-{
-    options.LoggingFields = HttpLoggingFields.RequestMethod
-                          | HttpLoggingFields.RequestPath
-                          | HttpLoggingFields.ResponseStatusCode
-                          | HttpLoggingFields.Duration;
-    options.RequestHeaders.Clear();
-    options.ResponseHeaders.Clear();
-    options.RequestHeaders.Add("User-Agent");
-    options.RequestHeaders.Add("X-Correlation-Id");
-});
-```
+**Never log** `Authorization`, `Cookie`, `Set-Cookie`, `X-API-Key`, or any header that may carry credentials. Calling `RequestHeaders.Clear()` before adding a curated allowlist is **mandatory** — the framework defaults include sensitive headers.
 
-**Never log** `Authorization`, `Cookie`, `Set-Cookie`, `X-API-Key`, or any header that may carry credentials. The `RequestHeaders.Clear()` call above is mandatory — the framework defaults include sensitive headers.
+Registration scaffold: [`.ai/references/dotnet-webapi/http-logging.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/http-logging.md)
 
 ---
 
 ## Long-running operations
 
-For work that takes longer than a request can reasonably hold open:
-
-1. `POST /api/v1.0/<resource>` returns `202 Accepted` + `Location: /api/v1.0/operations/{opId}` + the operation as JSON
-2. `GET /api/v1.0/operations/{opId}` returns `200 OK` with status `running | succeeded | failed` while in progress
-3. On completion, the same endpoint returns `303 See Other` + `Location: /api/v1.0/<resource>/{id}` pointing at the created/updated resource
-4. Operations are retained for at least 24 h after completion so polling clients can observe the terminal state
+For work that takes longer than a request can reasonably hold open: kickoff `POST` returns `202 Accepted` + `Location: /api/v1.0/operations/{opId}`; status `GET` on that operation returns `200 OK` with `running | succeeded | failed` while in progress, and `303 See Other` + `Location: <result-resource>` on completion. Operations are retained ≥ 24 h after completion so polling clients can observe the terminal state.
 
 ---
 
 ## Response compression
 
-```csharp
-builder.Services.AddResponseCompression(options =>
-{
-    options.EnableForHttps = true;
-    options.Providers.Add<BrotliCompressionProvider>();
-    options.Providers.Add<GzipCompressionProvider>();
-});
-```
-
 - Brotli first, gzip fallback
 - Exclude already-compressed media types (`image/*`, `application/zip`, `application/x-protobuf`, etc.) — wasted CPU otherwise
+
+Registration scaffold: [`.ai/references/dotnet-webapi/response-compression.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/response-compression.md)
 
 ---
 
 ## OpenAPI & Scalar
 
-```csharp
-builder.Services.AddOpenApi(options =>
-{
-    options.AddDocumentTransformer((document, _, _) =>
-    {
-        document.Info = new OpenApiInfo
-        {
-            Title = "Orders API",
-            Version = "v1.0",
-            Description = "...",
-            Contact = new OpenApiContact { Name = "Platform Team", Email = "platform@example.com" },
-            License = new OpenApiLicense { Name = "Proprietary" }
-        };
-        return Task.CompletedTask;
-    });
-});
-
-app.MapOpenApi();
-app.MapScalarApiReference(options =>
-{
-    options.WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl);    // bash curl examples
-    options.WithDefaultHttpClient(ScalarTarget.PowerShell, ScalarClient.Invoke); // PowerShell Invoke-RestMethod
-    options.WithTheme(ScalarTheme.Default);
-});
-```
-
 - API metadata (Title / Version / Description / Contact / License) is mandatory — published APIs without metadata are rejected in review
 - Scalar UI at `/scalar`; OpenAPI document at `/openapi/v1.0.json`
 - Code samples enabled for **bash curl** and **PowerShell** at minimum; other clients are opt-in
 - Deprecated endpoints carry the OpenAPI `deprecated: true` flag *and* return a `Sunset` response header
+
+Registration scaffold: [`.ai/references/dotnet-webapi/openapi-scalar.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/openapi-scalar.md)
 
 ---
 
@@ -788,114 +454,42 @@ No bUnit, no Playwright — those are Blazor-stack concerns.
 
 ### Integration tests — WebApplicationFactory + Testcontainers
 
-```csharp
-public sealed class OrderApiTests : IClassFixture<WebApiFactory>
-{
-    private readonly HttpClient _client;
-
-    public OrderApiTests(WebApiFactory factory) => _client = factory.CreateClient();
-
-    [Fact]
-    public async Task PostOrder_ValidPayload_Returns201WithLocation()
-    {
-        var response = await _client.PostAsJsonAsync("/api/v1.0/orders",
-            new CreateOrderRequest(CustomerId: Guid.NewGuid(), Items: []));
-
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
-        response.Headers.Location.Should().NotBeNull();
-    }
-}
-```
-
 - `WebApiFactory : WebApplicationFactory<Program>` swaps real infrastructure for Testcontainers (Postgres, Redis, etc.)
 - Each test class owns its database via Testcontainers — no shared mutable state across classes
 - Authentication in tests: register a test scheme that injects a known principal — never call the real identity provider
+
+Test class scaffold: [`.ai/references/dotnet-webapi/integration-test.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/integration-test.md)
 
 ### Manual / exploratory testing — Bruno
 
 Collections in `bruno/`, committed to Git. One folder per module, mirroring API routes.
 
-```
-bruno/
-├── bruno.json
-├── environments/
-│   ├── local.bru
-│   └── staging.bru
-└── <module>/
-    ├── create-<entity>.bru
-    ├── get-<entity>-by-id.bru
-    ├── update-<entity>.bru
-    └── delete-<entity>.bru
-```
-
-- One folder per module
-- Request files named for the action: `create-order.bru`, `get-order-by-id.bru`
+- One folder per module; request files named for the action (`create-order.bru`, `get-order-by-id.bru`)
 - Base URLs and tokens via Bruno environments — never hardcoded in `.bru` files
 - When an endpoint is added or changed, the corresponding Bruno request is added or updated in the same PR
 - Include realistic example bodies and useful assertions (status code, response shape)
+
+Directory layout scaffold: [`.ai/references/dotnet-webapi/bruno-layout.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/bruno-layout.md)
 
 ### Performance / load testing — k6
 
 Scripts in `perf/`, committed to Git. One scenario per critical user journey or hot endpoint.
 
-```
-perf/
-├── scenarios/
-│   ├── create-order.smoke.js
-│   ├── create-order.load.js
-│   └── browse-catalog.soak.js
-├── lib/
-│   └── auth.js              ← shared helpers (token acquisition, fixtures)
-└── thresholds.js            ← shared SLO thresholds
-```
-
-- Scenario naming: `<endpoint-or-journey>.<profile>.js` where `<profile>` is `smoke` (1 VU, ~30 s), `load` (steady state at target rps), `stress` (ramp past expected peak), or `soak` (sustained over hours)
-- Every script declares `thresholds` for `http_req_duration` (e.g. `p(95)<300`) and `http_req_failed` (e.g. `rate<0.01`); a failed threshold fails the run and the CI job
+- Scenario naming: `<endpoint-or-journey>.<profile>.js` where `<profile>` ∈ `smoke | load | stress | soak`
+- Every script declares `thresholds` for `http_req_duration` and `http_req_failed`; a failed threshold fails the run and the CI job
 - Target environment via `K6_BASE_URL` env var — never hardcode hosts
 - Authentication via shared helpers in `perf/lib/` — never embed real tokens in scripts
 - CI: smoke profile runs on every PR (fast, blocking); load / stress / soak run on demand or on schedule (long, non-blocking gate)
 - Output: write JSON results to a CI artifact via `--out json=results.json`; optional push to InfluxDB / Grafana for trending
 - When an endpoint's expected throughput or latency budget changes, update the corresponding scenario and its thresholds in the same PR
 
-```javascript
-import http from 'k6/http';
-import { check } from 'k6';
-
-export const options = {
-  scenarios: {
-    steady: { executor: 'constant-arrival-rate', rate: 50, timeUnit: '1s', duration: '5m', preAllocatedVUs: 50 }
-  },
-  thresholds: {
-    http_req_duration: ['p(95)<300'],
-    http_req_failed: ['rate<0.01'],
-  },
-};
-
-export default function () {
-  const res = http.get(`${__ENV.K6_BASE_URL}/api/v1.0/orders?pageSize=20`);
-  check(res, { 'status is 200': (r) => r.status === 200 });
-}
-```
+Layout + sample script + profile definitions: [`.ai/references/dotnet-webapi/k6-scenarios.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/k6-scenarios.md)
 
 ---
 
 ## Project Scaffold Checklist (WebAPI additions)
 
-Inherits the base `dotnet-core` checklist, plus:
-
-- [ ] `Asp.Versioning.Http` registered with URL-segment versioning, default v1.0, group name format produces `v{MAJOR}.{MINOR}` URLs
-- [ ] Single authentication scheme chosen and documented in `README.md`
-- [ ] `AddProblemDetails()` + global `IExceptionHandler` wired in `Program.cs`
-- [ ] `AddRateLimiter()` with at least one named policy
-- [ ] `AddHttpLogging()` with sensitive headers explicitly cleared from logging
-- [ ] CORS configured with explicit origin allowlist per environment
-- [ ] `AddResponseCompression()` enabled
-- [ ] OpenAPI metadata (Title / Version / Description / Contact / License) populated
-- [ ] Scalar UI at `/scalar` with curl + PowerShell code samples enabled
-- [ ] Kiota generation script committed (or documented as N/A)
-- [ ] `bruno/` collection seeded with at least one happy-path request per endpoint
-- [ ] Integration test project using `WebApplicationFactory` + Testcontainers
-- [ ] `perf/` directory with at least one k6 smoke scenario per critical endpoint, wired into CI
+WebAPI-specific init-time checklist (inherits the base + .NET checklists) lives at [`.ai/references/scaffold-checklists.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/scaffold-checklists.md) under "**.NET WebAPI**".
 
 ---
 

@@ -240,17 +240,7 @@ In addition to the base guardrails:
 - `Task.Result` or `.GetAwaiter().GetResult()` — always `await`
 - Magic strings — use `const` or `nameof()`
 - Direct `HttpClient` instantiation — always via `IHttpClientFactory`
-- Secrets, connection strings, or credentials in source files
 - Cross-module project references (use shared interfaces)
-- Tests that are modified to pass (fix the implementation instead)
-- Hardcoded return values, mock results, or stub logic to satisfy a test
-- Silently swallowed exceptions to make a test green
-- `#nullable disable` or warning suppressions to fix build errors
-- Commented-out code blocks — delete them, git has history
-- `Console.WriteLine` — use `ILogger<T>`
-- Generic `catch (Exception)` — use specific exception types
-- Missing `CancellationToken` on async methods that call external resources
-- `using` statements for namespaces already covered by `global using`
 
 ---
 

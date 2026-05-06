@@ -81,15 +81,6 @@ Regional formatting (date, time, number, currency separators) is selected from t
 - If the language is `de` but the OS region is missing or unrecognized: fall back to **`de-CH`**
 - For `en`: use the OS-provided region (typically `en-US` / `en-GB`) — do not force a default
 
-`de-CH` formatting reference:
-
-| Field | Format | Example |
-|---|---|---|
-| Date | `dd.MM.yyyy` | `30.04.2026` |
-| Decimal separator | `.` | `1234.56` |
-| Thousands separator | `'` | `1'234.56` |
-| Currency | `CHF 1'234.56` | — |
-
 ### Rules
 
 - All date / number / currency rendering goes through the platform's localization API — never hand-format with raw `string.Format` / `toString()` / template literals.
@@ -100,26 +91,9 @@ Regional formatting (date, time, number, currency separators) is selected from t
 
 ## Versioning (SemVer)
 
-All projects follow [Semantic Versioning 2.0.0](https://semver.org/):
+All projects follow [Semantic Versioning 2.0.0](https://semver.org/): `MAJOR.MINOR.PATCH` — `MAJOR` = breaking, `MINOR` = new feature (backwards-compatible), `PATCH` = bug fix.
 
-```
-MAJOR.MINOR.PATCH  →  e.g. 2.4.1
-```
-
-| Increment | When |
-|---|---|
-| `MAJOR` | Breaking change — incompatible API or behaviour change |
-| `MINOR` | New functionality, backwards-compatible |
-| `PATCH` | Bug fix, backwards-compatible |
-
-**Mapping from Conventional Commits:**
-
-| Commit type | Version bump |
-|---|---|
-| `BREAKING CHANGE:` footer or `!` after type | MAJOR |
-| `feat` | MINOR |
-| `fix`, `perf` | PATCH |
-| `chore`, `docs`, `ci`, `test`, `refactor` | no bump |
+Conventional Commits mapping: `BREAKING CHANGE:` footer or `!` after type → MAJOR; `feat` → MINOR; `fix`, `perf` → PATCH; `chore`, `docs`, `ci`, `test`, `refactor` → no bump.
 
 - Git tags follow `v<MAJOR>.<MINOR>.<PATCH>` (e.g. `v1.3.0`) — tag on `main` after merge
 - Pre-release: `v1.0.0-alpha.1`, `v1.0.0-beta.2`, `v1.0.0-rc.1`

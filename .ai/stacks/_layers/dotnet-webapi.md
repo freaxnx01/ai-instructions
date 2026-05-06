@@ -25,27 +25,11 @@ Endpoint group scaffold: [`.ai/references/dotnet/endpoint-group.md`](https://git
 
 ### HTTP status code conventions
 
-| Code | Use |
-|---|---|
-| `200 OK` | Successful read or non-creating action |
-| `201 Created` | Resource created — **must include `Location` header pointing at the new resource** |
-| `202 Accepted` | Async work accepted — include `Location` to status resource (see LRO) |
-| `204 No Content` | Successful PUT / PATCH / DELETE with no body |
-| `400 Bad Request` | Malformed request (parse failure, missing required field) |
-| `401 Unauthorized` | Missing or invalid credentials |
-| `403 Forbidden` | Authenticated but not allowed |
-| `404 Not Found` | Resource does not exist |
-| `409 Conflict` | Request conflicts with current resource state |
-| `412 Precondition Failed` | `If-Match` ETag mismatch |
-| `422 Unprocessable Entity` | Semantic validation failure (parsed OK, content invalid) |
-| `429 Too Many Requests` | Rate limit hit — include `Retry-After` |
+Non-obvious rules: `201 Created` must include a `Location` header to the new resource; `202 Accepted` must include a `Location` to the status resource; use `422` (not `400`) for semantic validation failures (body parsed OK, content invalid); `429` must include `Retry-After`.
 
 ### HTTP GET with request body — forbidden for new endpoints
 
-Per RFC 7231 / 9110, GET request bodies have no defined semantics. Servers, proxies, and caches frequently strip, ignore, or reject them, which causes silent breakage and cache poisoning.
-
-- **New endpoints:** use query parameters. If the parameter set is too large or sensitive for a URL, use `POST /search` (or another action sub-resource).
-- **Legacy endpoints:** allowed only when required for backward compatibility. Mark the endpoint with `[Obsolete]` (or `.WithMetadata(new ObsoleteAttribute())`) and emit a `Sunset` header carrying the planned removal date.
+GET bodies have undefined semantics (RFC 9110) — proxies and caches may drop them. New endpoints: use query params, or `POST /search` for large/sensitive filter sets. Legacy endpoints: allowed for backwards-compat only; mark `[Obsolete]` and emit a `Sunset` header.
 
 ### Errors — always ProblemDetails
 
@@ -220,12 +204,9 @@ Directory layout scaffold: [`.ai/references/dotnet-webapi/bruno-layout.md`](http
 Scripts in `perf/`, committed to Git. One scenario per critical user journey or hot endpoint.
 
 - Scenario naming: `<endpoint-or-journey>.<profile>.js` where `<profile>` ∈ `smoke | load | stress | soak`
-- Every script declares `thresholds` for `http_req_duration` and `http_req_failed`; a failed threshold fails the run and the CI job
-- Target environment via `K6_BASE_URL` env var — never hardcode hosts
-- Authentication via shared helpers in `perf/lib/` — never embed real tokens in scripts
-- CI: smoke profile runs on every PR (fast, blocking); load / stress / soak run on demand or on schedule (long, non-blocking gate)
-- Output: write JSON results to a CI artifact via `--out json=results.json`; optional push to InfluxDB / Grafana for trending
-- When an endpoint's expected throughput or latency budget changes, update the corresponding scenario and its thresholds in the same PR
+- Every script declares `thresholds` for `http_req_duration` and `http_req_failed` — a failed threshold fails the CI job
+- Environment via `K6_BASE_URL`; auth via shared helpers in `perf/lib/` — never hardcode hosts or tokens
+- CI: smoke runs on every PR (blocking); load / stress / soak on demand; output JSON via `--out json=results.json`
 
 Layout + sample script + profile definitions: [`.ai/references/dotnet-webapi/k6-scenarios.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/k6-scenarios.md)
 

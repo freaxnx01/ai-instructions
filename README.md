@@ -15,7 +15,7 @@ Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each pr
     flutter.md                  ← single-file overlay (no layer split)
     _partials/
       dotnet-core.md            ← shared .NET conventions (C#, EF, Docker,
-                                  logging, Makefile, CI, security, basic
+                                  logging, justfile, CI, security, basic
                                   Minimal API + ProblemDetails)
     _layers/
       dotnet-blazor.md          ← Blazor + MudBlazor + bUnit + Playwright

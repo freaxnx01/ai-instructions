@@ -34,6 +34,9 @@ scripts/
                                   stacks/dotnet-*.md files
 
 .claude/commands/               ← Claude Code slash-command wrappers for the skills above
+
+workflows/                      ← cross-cutting workflow docs that span repos
+  personal-dev-workflow.md      ← brainstorm↔CC handoff, repo roles, content placement
 ```
 
 `sync-ai-instructions` and `release-notes` used to live here as `.ai/skills/*.md`; they are now standalone plugins in the `freaxnx01/agent-skills` / `freaxnx01/claude-code-plugins` marketplaces and are available globally once installed.
@@ -129,3 +132,7 @@ The build script currently handles `dotnet-*` only. Extending it to a second spl
 ## Keeping a project in sync
 
 When `base-instructions.md` or the stack overlay changes, consumers re-run `/sync-ai-instructions <stack>` to regenerate their `CLAUDE.md` / copilot / SKILL files. The skill reports the source commit SHA so you know which version of the instructions is in use.
+
+## Workflows
+
+Beyond per-stack agent instructions, this repo also hosts cross-cutting workflow docs under `workflows/` — practices that span multiple repos rather than belonging to any single stack. The current entry, [`workflows/personal-dev-workflow.md`](workflows/personal-dev-workflow.md), defines repo roles (consumer vs. implementer), content placement across the personal toolchain, and the brainstorm→CC handoff pattern.

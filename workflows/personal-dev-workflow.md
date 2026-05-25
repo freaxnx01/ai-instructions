@@ -1,7 +1,9 @@
 Personal Development Workflow
 
-Status: Seed document — captured from a Claude App brainstorm on 2026-05-25.
-Needs refinement in CC CLI session. Open questions are flagged inline.
+Status: seed
+Captured: 2026-05-25 (Claude App brainstorm)
+Needs refinement in CC CLI session. Open questions are flagged inline; resolved
+decisions are captured in the Decisions section below.
 
 Purpose
 Define a coherent personal development workflow that answers:
@@ -47,7 +49,7 @@ Sanitization required: Public repo. Abstract specifics — no real hostnames,
 no employer-internal details, no homelab specifics that reveal attack surface.
 Use placeholders (<homelab-host>, "internal company GitHub org") or keep
 sensitive values in gitignored local/ files.
-ideas-lab (private GitHub repo, to be created)
+ideas-lab (private GitHub repo)
 Scope: Ideas-before-projects, experiments, rough thinking.
 What goes here:
 
@@ -209,20 +211,160 @@ ai-instructions → aii, ideas-lab → idl)
 For bridge specifically, brg may eventually become the command name of
 the bridge CLI tool itself (not just a cd alias) — e.g. brg <repo>
 launches an agent session in that repo, brg status shows the dashboard.
+Decisions
+
+1. Seed file naming convention (resolved 2026-05-25)
+   Canonical folders (workflows/, designs/, project docs/): stable filename,
+   two-line preamble at top of file:
+       Status: seed
+       Captured: YYYY-MM-DD (Claude App brainstorm)
+   When the doc graduates, delete the preamble — filename stays the same so
+   git history and external links survive.
+
+   ideas-lab/ideas/: date-prefix filename (YYYY-MM-DD-<slug>.md).
+   Chronological browsing matters more than stable names here; most entries
+   won't graduate, and the ones that do get copied/moved into a real repo
+   anyway.
+
+2. Public/private companion pattern (resolved 2026-05-25)
+   Private companions live in a gitignored top-level `local/` folder that
+   mirrors the public structure:
+
+       ai-instructions/
+         workflows/personal-dev-workflow.md       ← public, sanitized
+         local/
+           workflows/personal-dev-workflow.md     ← private, concrete values
+
+   Adjacency makes "sanitize and publish" natural: diff `local/X` against `X`,
+   scrub the differences, commit only the public version. The homelab vault
+   stays scoped to homelab content; no new repo needed.
+
+   Portability/backup concern (the `local/` folder lives only on the current
+   machine) is real but separable — solve later via symlink to a synced path,
+   rsync target, or similar. Not part of this decision.
+
+3. ADR location (resolved 2026-05-25)
+   Per-repo ADRs continue to live in `<repo>/docs/adr/` (project-scoped
+   decisions).
+
+   Cross-cutting decisions use a hybrid model:
+   - Lightweight resolutions stay as inline entries in the relevant workflow
+     or design doc's `Decisions` section (like this one).
+   - Substantive decisions get promoted to
+     `ai-instructions/decisions/NNNN-slug.md` in standard ADR format
+     (Context · Decision · Consequences · Alternatives).
+
+   Promote to a full ADR when at least one is true:
+   1. The decision affects how multiple repos behave (not just one doc).
+   2. You expect to revisit or reverse it later.
+   3. Future-you would need the context-and-tradeoffs to understand *why*,
+      not just *what*.
+
+   First likely candidate: the consumer vs. implementer repo role split —
+   promote when the next substantive cross-cutting decision comes up.
+
+4. Obsidian + non-vault repos (resolved 2026-05-25)
+   - `ideas-lab` → opened as an Obsidian vault. `.obsidian/` gitignored
+     (per-machine config, no plugin state in the repo).
+   - `ai-instructions` → NOT an Obsidian vault. Public repo consumed via
+     GitHub; wikilinks (`[[...]]`) render as broken plain text there. Stick
+     to standard relative markdown links.
+   - Code repos → never Obsidian vaults.
+   - Homelab vault → stays the canonical vault (full Obsidian feature set,
+     `.obsidian/` committed).
+
+   Cross-vault/cross-repo links fall back to plain markdown links with
+   relative paths or GitHub URLs. Lose the bidirectional backlink, keep the
+   link.
+
+   Concrete follow-up (separate session in the ideas-lab repo): add
+   `.obsidian/` to `ideas-lab/.gitignore`.
+
+5. Reverse handoff CC CLI → Claude App (resolved 2026-05-25)
+   Default (A): ask CC to produce a handoff file with the structure
+       - What we set out to do
+       - What we decided
+       - What's blocked or needs broader thinking
+       - The specific question Claude App should help with
+   Place at `docs/ai-notes/YYYY-MM-DD-handoff-<slug>.md` (commit or not, your
+   call). Paste into Claude App as the opening prompt.
+
+   When continuing a prior thread (B): use Claude App's `conversation_search`
+   to find the original brainstorm, then attach the handoff file's
+   "what I've learned since" delta into that thread.
+
+   Fallback (C): no prior brainstorm, no CC state worth dumping → start fresh
+   in Claude App referencing the seed file by name.
+
+   Rationale: a written artifact (A) enforces the same discipline as the
+   forward direction — Claude App can't read local files, so the dump has to
+   exist in text form regardless. Making it a checkpoint in `docs/ai-notes/`
+   keeps the handoff visible in git history.
+
+6. /sync-ai-instructions extension for workflow snapshots (resolved 2026-05-25)
+   No extension. Workflow distribution is reference-only: consumer repos
+   name the workflow file in their CLAUDE.md ("ai-instructions repo, file
+   workflows/personal-dev-workflow.md") and CC reads it from the sibling
+   repo or fetches from GitHub when needed.
+
+   Rationale: snapshots create coordination tax (every workflow update means
+   re-sync in N consumer repos, or accept stale copies). Offline/CI scenarios
+   are rare enough that copying the file in as a one-off — or just cloning
+   `ai-instructions` alongside the consumer repo — beats baking
+   snapshot logic into the sync skill.
+
+   Revisit if a concrete need shows up (e.g. a CI workflow that genuinely
+   needs the doc and can't reach `ai-instructions`).
+
+7. Pruning / lifecycle (resolved 2026-05-25)
+   Both `ideas-lab` and `ai-instructions/designs/` favor archive-with-status
+   over delete. Use the same `Status:` preamble pattern from Decision #1.
+
+   ideas-lab:
+   - `ideas/<name>.md` — `Status: active`
+   - `archived/<name>.md` — `Status: graduated YYYY-MM-DD → <repo-url>` or
+     `Status: abandoned YYYY-MM-DD — <reason>`
+   - Quarterly review pass: walk `ideas/`, bump or archive stale entries.
+   - Never delete unless it's accidental scratch (duplicates, moved content).
+
+   ai-instructions/designs/:
+   - Status values: `living` · `implemented` · `superseded by <path>` ·
+     `abandoned YYYY-MM-DD — <reason>`
+   - No `archived/` subfolder — designs stay co-located so grep-by-topic
+     keeps working. Never delete.
+
+   Common principle: the reasoning behind a discarded idea or superseded
+   design is often more valuable than the idea itself. Git history preserves
+   deletions but no one searches it; keep the file, mark the status.
+
+8. Forgejo mirroring (resolved 2026-05-25)
+   GitHub stays primary/canonical for both `ai-instructions` and `ideas-lab`.
+   Forgejo is a backup mirror.
+
+   Mechanism: Forgejo pull-mirror (Forgejo pulls from GitHub on schedule).
+   In Forgejo: New Migration → GitHub → check "This repository will be a
+   mirror." Configured once, then forgotten.
+
+   Rules:
+   - One writable remote: GitHub. Don't push to Forgejo manually.
+   - URLs in CLAUDE.md / workflow docs / cross-references stay
+     `github.com/freaxnx01/...` — no churn, GitHub remains canonical.
+   - `ai-instructions` on Forgejo: private mirror is enough (GitHub is the
+     public distribution channel).
+   - `ideas-lab` on Forgejo: private mirror.
+
+   Covers: GitHub outage, account suspension, archival link rot.
+   Doesn't cover: simultaneous loss of homelab + GitHub. If that's a
+   concern, add a third leg (external drive, off-site remote) — out of
+   scope here.
+
+   Concrete follow-up (separate session): set up the two pull-mirrors in
+   the Forgejo instance.
+
 Open Questions for CC CLI Session
 
-Naming convention for seed files. Date prefix? Status header? Frontmatter?
-Public/private companion pattern. When a workflows/ doc in
-ai-instructions is abstract for public consumption, where does the
-private version with real values live? Gitignored local/ folder? Companion
-file in homelab vault?
-ADR location. Per-repo docs/adr/ for project-scoped decisions, but
-where do cross-cutting ADRs live? ai-instructions/decisions/?
-Obsidian + non-vault repos. The homelab vault has Obsidian's full
-feature set. ai-instructions and ideas-lab are plain markdown repos.
-Do I open them in Obsidian too? If yes, how does that interact with Git
-and CC CLI?
-Reverse handoff (CC CLI → Claude App). When CC gets stuck or needs
+(All seed questions resolved 2026-05-25. New questions land here as they
+come up.) When CC gets stuck or needs
 broader thinking, what's the clean way to bring context back to Claude App?
 Context-dump file? conversation_search? Fresh brainstorm referencing the
 seed?

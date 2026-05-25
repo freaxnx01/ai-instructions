@@ -1,0 +1,3 @@
+# Private companions to public docs — concrete values, real hostnames, etc.
+# See workflows/personal-dev-workflow.md, Decisions §2.
+local/

@@ -1,10 +1,5 @@
 Personal Development Workflow
 
-Status: seed
-Captured: 2026-05-25 (Claude App brainstorm)
-Needs refinement in CC CLI session. Open questions are flagged inline; resolved
-decisions are captured in the Decisions section below.
-
 Purpose
 Define a coherent personal development workflow that answers:
 

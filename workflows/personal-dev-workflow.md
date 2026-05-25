@@ -266,6 +266,12 @@ Different from the "where" — about when to capture:
 Promotion (rough idea → spec → issue → PR) happens naturally once the
 thought is in the system.
 
+Boundary with Superpowers (per Decision #10)
+Once a thought is routed, if the destination is creative work (a new
+feature, a behavior change, a new component), Superpowers takes over
+from there. Routing Daily Thoughts ends at capture; Superpowers handles
+the lifecycle from refined intent to shipped code.
+
 Repo Inventory (current state, for reference)
 RepoVisibilityRoleNotesai-instructionspublicImplementerAI tooling, CLAUDE.md/SKILL.md, multi-stack. Hosts this workflow doc. CLI alias aii.homelab vaultprivate (separate, Git-backed, not on GitHub)n/a (vault, not workflow infra)Homelab infra notes only — correctly scoped. Lives at /mnt/c/Users/freax/Documents/Obsidian/homelab/.agent-pipeline (planned rename of claude-pipeline)privateImplementerGH Actions pipeline replicating Copilot Coding Agent. Hosts its own design doc. CLI alias agp.bridge (renamed from clrepo)privateImplementerPersonal dev cockpit: agent session launcher, dashboards for issues/PRs/Action runs. CLI alias brg.ideas-labprivateImplementerIdeas-before-projects incubator. CLI alias idl.quicktask-vikunja etc.variesConsumerReal projects. Follow workflow as background guidance.
 Disk layout: repos are organized by visibility:
@@ -466,13 +472,39 @@ Decisions
       validated by repeated use in this session. Encodes the Routing
       Daily Thoughts decision tree at handoff time.
 
-   Held until Open Question #10 (Routing vs. Superpowers boundary) is
-   resolved:
-   - Brainstorm idea → spec
-   - Promote idea → feature Issue
+   Unblocked by Decision #10 (Routing vs. Superpowers boundary), to be
+   built after #1 and #4:
+   - Brainstorm idea → spec (wrapper that delegates to Superpowers'
+     `brainstorming` with idea-lab→spec routing baked in)
+   - Promote idea → feature Issue (applies the short-plan-in-body vs
+     link-to-design-doc routing rule, optionally invokes Superpowers'
+     `writing-plans` for substantial plans)
 
    Deferred until a concrete trigger:
    - Path-portability audit (waits for next new-repo bootstrap).
+
+10. Routing Daily Thoughts vs. Superpowers boundary (resolved 2026-05-25)
+    Routing Daily Thoughts owns capture-time placement. Superpowers owns
+    the implementation lifecycle. They compose, not compete.
+
+    Rule: routing happens first, every time. Superpowers activates when
+    the captured artifact is creative work (features, behavior changes,
+    new components). Many routed thoughts never see Superpowers at all
+    (chore Issues, checklists, ideas-lab entries in `ideas/`, lifecycle
+    bookkeeping per Decision #7, repo renames, ADR captures).
+
+    Overlap zones:
+    - Idea-lab graduation (idea → spec): routing decides spec location,
+      Superpowers' `brainstorming` produces spec contents.
+    - Feature Issue with plan: routing decides short-plan-in-body vs
+      link-to-design-doc, Superpowers' `writing-plans` produces
+      structured plans when substantial.
+
+    Effect: routing wrappers can invoke Superpowers as a delegated
+    sub-process. CC Skill candidates #2 (brainstorm-to-spec) and #3
+    (idea-to-Issue) are now unblocked under this framing.
+
+    Mnemonic: routing decides location; Superpowers produces content.
 
 CC Skills for Workflow Steps
 Some workflow steps recur often enough — and have stable enough shape —
@@ -520,22 +552,15 @@ Weaker candidates (one-off enough that a doc is fine, no skill needed):
   covered by README templates)
 
 First targets (per Decision #9): ideas-lab review pass (#1), then seed
-file handoff (#4). Candidates #2 and #3 are held until Open Question #10
-is resolved.
+file handoff (#4). Candidates #2 (brainstorm idea → spec) and #3 (idea →
+feature Issue) are unblocked per Decision #10 and scoped as routing-
+wrappers that delegate creative-work-process to Superpowers — implement
+after the first two ship.
 
 Open Questions for CC CLI Session
 
-(All 8 original seed questions resolved 2026-05-25. New questions added
-2026-05-25 below.)
-
-9. Routing Daily Thoughts vs. Superpowers plugin. The Superpowers
-   plugin provides a brainstorm → spec → TDD pipeline. The Routing
-   Daily Thoughts decision tree covers some of the same ground (idea
-   capture, spec-vs-issue placement). Where's the boundary? Does
-   Superpowers take over once a thought is routed to "spec / impl
-   plan (existing project)"? Or does Routing Daily Thoughts handle
-   the lightweight cases and Superpowers handle the heavy-process
-   ones? Define the handoff.
+(All 10 questions resolved 2026-05-25. New questions land here as they
+come up.)
 
 Next Steps
 

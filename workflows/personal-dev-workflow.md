@@ -179,6 +179,93 @@ into Claude App
 Use conversation_search to find prior Claude App threads on the topic
 Treat it as a fresh Claude App brainstorm referencing the seed file
 
+Routing Daily Thoughts
+The content placement model above answers structural questions ("where
+do designs live?"). This section answers the higher-frequency, smaller-
+grained question: "I just had a thought — where does it go right now?"
+
+Principle
+Capture close to the destination. Where the thought belongs when it's
+done is also where it belongs when it's a half-formed sentence. This
+avoids a central inbox that has to be drained.
+
+Decision tree
+
+```
+Is this about an existing, concrete project?
+├─ YES → that project's repo
+│   ├─ Tracking-level thing (todo, bug, chore) → GitHub Issue
+│   ├─ Recurring checklist (release prep, manual test pass) → docs/checklists/
+│   ├─ Plan/design (>30 lines) → designs/ + Issue that references it
+│   └─ Plan/design (<30 lines) → Issue body, no separate file
+│
+└─ NO → is this about how I work, or about a thing to build?
+    ├─ How I work (workflow, convention)
+    │   ├─ Cross-project pattern (mature) → ai-instructions/workflows/
+    │   │                                or ai-instructions/designs/
+    │   └─ Just an idea, not committed → ideas-lab/ideas/
+    │
+    └─ A thing to build, no repo yet → ideas-lab/ideas/
+        └─ When matures → graduate to dedicated repo
+```
+
+Bucket-by-bucket guidance
+
+Todos (manual testing, chores)
+- One-off chores → GitHub Issue with `chore` label, on the relevant repo.
+- Recurring checklists (release prep, deployment steps, manual test
+  passes) → `docs/checklists/<name>.md` in the project repo. Issues
+  close; checklists persist.
+- Trivial reminders to self → still prefer an Issue. Personal todo
+  files tend to rot.
+
+Ideas (no project yet)
+- `ideas-lab/ideas/<rough-name>.md`. Low-friction: a few bullets is
+  enough at capture time.
+- Frontmatter optional but useful as the idea matures: `status: idea
+  | exploring | graduated | abandoned`, `created: YYYY-MM-DD`.
+
+Spec / impl plan (existing project)
+- Spec and impl plan are usually the same artifact at different
+  fidelities — don't create two files.
+- Lives at `<project>/designs/<feature>.md` or `<project>/docs/specs/<feature>.md`.
+  Pick one convention per project.
+
+Issue with impl plan
+- For short plans (< ~30 lines): paste the plan into the Issue body.
+  Issue becomes the canonical spec; PR closes the Issue. Clean and
+  minimal.
+- For longer plans: extract to `designs/<feature>.md`, reference from
+  the Issue ("See `designs/<feature>.md` for the plan"). Avoids
+  duplication; design doc survives in Git diff history.
+
+PR
+- Body references the Issue (`Closes #N`) and the design doc if any.
+- PR body is for change description and reviewer context, not for the
+  plan content itself.
+
+Workflow idea → existing project
+- Cross-project convention → `ai-instructions/workflows/` or `designs/`.
+- Single-project change → that project's `docs/` or `docs/adr/`.
+- Speculative, not yet committed → `ideas-lab/ideas/`.
+
+Workflow idea → new project
+- `ideas-lab/ideas/<name>.md`. Matures → graduation path (real repo
+  created, idea moved to `archived/` with pointer).
+
+Capture-timing rule
+Different from the "where" — about when to capture:
+- Rough keyword, two-line thought → capture immediately, at lowest
+  fidelity it deserves. The dangerous middle is "I'll write it down
+  later." You won't.
+- Half-formed plan → capture in the right home, mark `Status: rough
+  draft` at the top of the file.
+- Concrete plan you're about to execute → capture in the right home,
+  then create the Issue/PR/branch that operationalizes it.
+
+Promotion (rough idea → spec → issue → PR) happens naturally once the
+thought is in the system.
+
 Repo Inventory (current state, for reference)
 RepoVisibilityRoleNotesai-instructionspublicImplementerAI tooling, CLAUDE.md/SKILL.md, multi-stack. Hosts this workflow doc. CLI alias aii.homelab vaultprivate (separate, Git-backed, not on GitHub)n/a (vault, not workflow infra)Homelab infra notes only — correctly scoped. Lives at /mnt/c/Users/freax/Documents/Obsidian/homelab/.agent-pipeline (planned rename of claude-pipeline)privateImplementerGH Actions pipeline replicating Copilot Coding Agent. Hosts its own design doc. CLI alias agp.bridge (renamed from clrepo)privateImplementerPersonal dev cockpit: agent session launcher, dashboards for issues/PRs/Action runs. CLI alias brg.ideas-labprivateImplementerIdeas-before-projects incubator. CLI alias idl.quicktask-vikunja etc.variesConsumerReal projects. Follow workflow as background guidance.
 Disk layout: repos are organized by visibility:
@@ -356,20 +443,75 @@ Decisions
    Concrete follow-up (separate session): set up the two pull-mirrors in
    the Forgejo instance.
 
+CC Skills for Workflow Steps
+Some workflow steps recur often enough — and have stable enough shape —
+that they're candidates to become CC Skills (in
+`ai-instructions/stacks/<stack>/SKILL.md` or a workflow-scoped skill
+location yet to be decided; see Open Question #9 below).
+
+What makes a workflow step a good skill candidate
+- Recurring — you do it more than monthly.
+- Stable shape — the steps are similar each time; what varies is the
+  content, not the procedure.
+- Decision-heavy in a predictable way — the same kinds of judgment
+  calls come up each time, so a skill that encodes those calls saves
+  thinking.
+- Crosses tool boundaries — touches Git, GitHub, files, and conventions
+  in a coordinated way. Skills earn their keep when the coordination
+  is the tricky part.
+
+Candidate workflow steps
+
+Strong candidates:
+1. "Go through `ideas-lab` ideas" — periodic review pass. Triage each
+   idea: still relevant? promote to design? archive? Skill encodes the
+   review questions, frontmatter conventions, archival pattern.
+2. "Brainstorm an idea into a spec" — taking an idea from
+   `ideas-lab/ideas/<name>.md` and producing either a design doc in
+   `ideas-lab` itself (for refinement) or, when mature, a real repo
+   with a starter spec. Skill encodes the structure of a good spec
+   and the graduation path.
+3. "Promote an idea to a feature Issue" — once a spec is solid enough,
+   open a GitHub Issue on the right project repo with the plan, link
+   back to the spec, set labels. Skill encodes the short-plan-in-body-
+   vs-link-to-design-doc decision and labeling conventions.
+4. "Seed file handoff from Claude App" — the brainstorm-to-CC-CLI
+   handoff happens often enough that a skill could codify it: where
+   to drop the seed, what the first CC prompt should look like, what
+   to commit and when.
+5. "Audit + rewrite paths for repo portability" — surfaced during the
+   `ideas-lab` bootstrap. Skill encodes the path conventions (see Path
+   Conventions section above) and the audit-then-apply pattern.
+
+Weaker candidates (one-off enough that a doc is fine, no skill needed):
+- Repo renames (rare, prompt-driven is fine)
+- Creating a new implementer repo (uses existing seed pattern, well-
+  covered by README templates)
+
+Where workflow skills live is left to Open Question #9 below.
+
 Open Questions for CC CLI Session
 
-(All seed questions resolved 2026-05-25. New questions land here as they
-come up.) When CC gets stuck or needs
-broader thinking, what's the clean way to bring context back to Claude App?
-Context-dump file? conversation_search? Fresh brainstorm referencing the
-seed?
-/sync-ai-instr extension. Extend to also sync workflow snapshots to
-per-repo .ai/workflow-snapshot.md? Or keep workflow distribution as
-CLAUDE.md path reference only?
-Pruning / lifecycle. When does an ideas-lab entry get archived vs.
-deleted? When does an ai-instructions/designs/ doc get retired?
-Forgejo mirroring. Should ai-instructions and ideas-lab also live
-on the homelab Forgejo instance, given the migration in progress?
+(All 8 original seed questions resolved 2026-05-25. New questions added
+2026-05-25 below.)
+
+9. CC Skills materialization. Should the CC Skills for Workflow Steps
+   section be turned into actual skills, and if so, which of the five
+   candidates (ideas-lab review pass, brainstorm-to-spec, idea-to-Issue
+   promotion, seed-file handoff, repo-portability audit) are the
+   strongest first targets? Also: where do workflow skills live?
+   `ai-instructions/skills/<step>/SKILL.md` (top-level, parallel to
+   `stacks/`) or `ai-instructions/workflows/skills/<step>/SKILL.md`
+   (nested under workflows)?
+
+10. Routing Daily Thoughts vs. Superpowers plugin. The Superpowers
+    plugin provides a brainstorm → spec → TDD pipeline. The Routing
+    Daily Thoughts decision tree covers some of the same ground (idea
+    capture, spec-vs-issue placement). Where's the boundary? Does
+    Superpowers take over once a thought is routed to "spec / impl
+    plan (existing project)"? Or does Routing Daily Thoughts handle
+    the lightweight cases and Superpowers handle the heavy-process
+    ones? Define the handoff.
 
 Next Steps
 

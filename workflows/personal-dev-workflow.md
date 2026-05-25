@@ -443,11 +443,42 @@ Decisions
    Concrete follow-up (separate session): set up the two pull-mirrors in
    the Forgejo instance.
 
+9. CC Skills for workflow steps — first targets and location (resolved 2026-05-25)
+   Workflow skills live as standalone plugins in the
+   `freaxnx01/agent-skills` marketplace, consistent with the
+   `sync-ai-instructions` precedent. This repo (`ai-instructions`)
+   documents what each skill does in the workflow doc; the implementation
+   lives in the marketplace repo.
+
+   Rejected locations:
+   - `ai-instructions/skills/<step>/SKILL.md` and
+     `ai-instructions/workflows/skills/<step>/SKILL.md` both conflate
+     "skills *about* the workflow this repo documents" with
+     "skills *distributed to consumers* of this repo." `.ai/skills/` is
+     reserved for consumer-bound skills (commit, push, ui-*).
+
+   First targets, in order:
+   1. ideas-lab review pass — highest recurrence × low complexity ×
+      independent of Open Question #10 × procedure already specified in
+      Decision #7. The skill becomes the forcing function for the
+      quarterly review.
+   2. Seed file handoff from Claude App — short stable procedure,
+      validated by repeated use in this session. Encodes the Routing
+      Daily Thoughts decision tree at handoff time.
+
+   Held until Open Question #10 (Routing vs. Superpowers boundary) is
+   resolved:
+   - Brainstorm idea → spec
+   - Promote idea → feature Issue
+
+   Deferred until a concrete trigger:
+   - Path-portability audit (waits for next new-repo bootstrap).
+
 CC Skills for Workflow Steps
 Some workflow steps recur often enough — and have stable enough shape —
-that they're candidates to become CC Skills (in
-`ai-instructions/stacks/<stack>/SKILL.md` or a workflow-scoped skill
-location yet to be decided; see Open Question #9 below).
+that they're candidates to become CC Skills. Workflow skills live as
+standalone plugins in the `freaxnx01/agent-skills` marketplace
+(see Decision #9), not inside this repo.
 
 What makes a workflow step a good skill candidate
 - Recurring — you do it more than monthly.
@@ -488,30 +519,23 @@ Weaker candidates (one-off enough that a doc is fine, no skill needed):
 - Creating a new implementer repo (uses existing seed pattern, well-
   covered by README templates)
 
-Where workflow skills live is left to Open Question #9 below.
+First targets (per Decision #9): ideas-lab review pass (#1), then seed
+file handoff (#4). Candidates #2 and #3 are held until Open Question #10
+is resolved.
 
 Open Questions for CC CLI Session
 
 (All 8 original seed questions resolved 2026-05-25. New questions added
 2026-05-25 below.)
 
-9. CC Skills materialization. Should the CC Skills for Workflow Steps
-   section be turned into actual skills, and if so, which of the five
-   candidates (ideas-lab review pass, brainstorm-to-spec, idea-to-Issue
-   promotion, seed-file handoff, repo-portability audit) are the
-   strongest first targets? Also: where do workflow skills live?
-   `ai-instructions/skills/<step>/SKILL.md` (top-level, parallel to
-   `stacks/`) or `ai-instructions/workflows/skills/<step>/SKILL.md`
-   (nested under workflows)?
-
-10. Routing Daily Thoughts vs. Superpowers plugin. The Superpowers
-    plugin provides a brainstorm → spec → TDD pipeline. The Routing
-    Daily Thoughts decision tree covers some of the same ground (idea
-    capture, spec-vs-issue placement). Where's the boundary? Does
-    Superpowers take over once a thought is routed to "spec / impl
-    plan (existing project)"? Or does Routing Daily Thoughts handle
-    the lightweight cases and Superpowers handle the heavy-process
-    ones? Define the handoff.
+9. Routing Daily Thoughts vs. Superpowers plugin. The Superpowers
+   plugin provides a brainstorm → spec → TDD pipeline. The Routing
+   Daily Thoughts decision tree covers some of the same ground (idea
+   capture, spec-vs-issue placement). Where's the boundary? Does
+   Superpowers take over once a thought is routed to "spec / impl
+   plan (existing project)"? Or does Routing Daily Thoughts handle
+   the lightweight cases and Superpowers handle the heavy-process
+   ones? Define the handoff.
 
 Next Steps
 

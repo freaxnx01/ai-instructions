@@ -95,6 +95,13 @@ doc as design input.
 
 **Read both before non-trivial changes.** Changes here may require corresponding
 updates to the workflow doc in `ai-instructions`.
+
+Snippet placement in CLAUDE.md (per Decision #12)
+Both snippets (the consumer `## Workflow context` section and the implementer
+`## Role in the personal dev workflow` section) go directly after
+`## Project Overview`, before `## Essential Commands`. Both are
+session-priming orientation; commands come after orientation.
+
 Design doc placement rule
 When an implementer repo has a substantial design doc, the doc lives with the
 implementation, not in ai-instructions. Example: agent-pipeline-design.md
@@ -555,6 +562,20 @@ Decisions
     use the corrected additive wording — not the original exclusive
     phrasing from the seed.
 
+12. CLAUDE.md snippet placement (resolved 2026-05-26)
+    Both the consumer `## Workflow context` snippet and the implementer
+    `## Role in the personal dev workflow` snippet go directly after
+    `## Project Overview`, before `## Essential Commands`.
+
+    Reasoning: both are session-priming orientation (what is this repo +
+    how does it relate to the broader workflow). Commands and conventions
+    come after orientation; reference material comes later still. CC reads
+    CLAUDE.md top-to-bottom at session start, so orientation belongs near
+    the top.
+
+    Follow-up (separate sessions): apply this placement when backfilling
+    `bridge/CLAUDE.md` and future `agent-pipeline/CLAUDE.md`.
+
 CC Skills for Workflow Steps
 Some workflow steps recur often enough — and have stable enough shape —
 that they're candidates to become CC Skills. Workflow skills live as
@@ -608,8 +629,8 @@ after the first two ship.
 
 Open Questions for CC CLI Session
 
-(All 11 questions resolved (10 on 2026-05-25, #11 on 2026-05-26). New
-questions land here as they come up.)
+(All 12 questions resolved — 10 on 2026-05-25, #11 and #12 on
+2026-05-26. New questions land here as they come up.)
 
 Next Steps
 

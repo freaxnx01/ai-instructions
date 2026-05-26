@@ -65,7 +65,6 @@ Cross-cutting:
 
 - `[Authorize]` / `.RequireAuthorization()` is the default for API key + JWT projects; opt out per-endpoint with `[AllowAnonymous]`. Pass-through projects register no scheme.
 - Anonymous endpoints are limited to `/health/*`, `/scalar`, and the OpenAPI document.
-- Never log the `Authorization`, `Cookie`, or `X-API-Key` header.
 
 Full per-scheme rules: [`.ai/references/dotnet-webapi/authentication-schemes.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/authentication-schemes.md)
 
@@ -220,17 +219,6 @@ WebAPI-specific init-time checklist (inherits the base + .NET checklists) lives 
 
 ## Agent Guardrails (WebAPI additions)
 
-In addition to the base and `dotnet-core` guardrails:
+Each rule in this layer (single auth scheme, no GET bodies, `ProblemDetails` only, CORS, sensitive-header logging, URL-segment versioning, Kiota, `Location` on 201/202, JWT validation, no token issuance) is enforced as written above. One additional guardrail not stated elsewhere:
 
-- Do not enable a second authentication scheme in an API project that already has one — the choice is project-wide
-- Do not accept a GET request with a body on a new endpoint — use query params or `POST /search`
-- Do not return raw error strings, anonymous error objects, or HTML error pages — always `ProblemDetails`
-- Do not combine `AllowAnyOrigin()` with `AllowCredentials()` in CORS configuration
-- Do not log the `Authorization`, `Cookie`, `Set-Cookie`, or `X-API-Key` headers
-- Do not omit the minor segment in URL paths (use `v1.0`, not `v1`)
-- Do not let an unversioned URL resolve to "latest" — pin it to v1.0 explicitly
-- Do not introduce NSwag, Refit, or AutoREST — Kiota is the default client generator
 - Do not create POST or PATCH endpoints without considering whether `Idempotency-Key` should be supported
-- Do not skip `Location` headers on `201 Created` or `202 Accepted` responses
-- Do not disable JWT validation (issuer, audience, lifetime, signing key) in any environment, including local
-- Do not introduce token issuance into a consumer API — token issuance belongs in a dedicated identity service

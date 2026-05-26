@@ -303,11 +303,11 @@ Registration scaffold: [`.ai/references/dotnet-webapi/api-versioning.md`](https:
 
 ## Authentication
 
-**One scheme per API project.** Do not mix schemes in the same service. The choice is made at project bootstrap and applies to every endpoint. Three approved schemes:
+**One scheme per API project.** Choice is made at project bootstrap and applies to every endpoint; do not mix. Three approved schemes (full rules in the reference doc below):
 
-- **Pass-through** (BFF / wrapper APIs): forward incoming `Authorization` to upstream verbatim; do not validate, re-issue, decode, log, or transform; do not call `AddAuthentication()` here. If the project exposes non-proxied endpoints, it isn't pass-through.
-- **API key** (`X-API-Key`): header name exact, no query-string fallback; custom `AuthenticationHandler<ApiKeySchemeOptions>`; keys in secret store; constant-time compare via `CryptographicOperations.FixedTimeEquals`; accept a small rotating set, not a single value.
-- **JWT bearer**: `AddJwtBearer(...)`; validate issuer, audience, lifetime, signing key — never disable in any environment; authorize via named policies, not raw roles. This API **consumes** tokens; issuance belongs in a dedicated identity service.
+- **Pass-through** (BFF / wrapper APIs): forward `Authorization` upstream verbatim; do not validate, decode, log, or call `AddAuthentication()`. Any non-proxied endpoint disqualifies the project from pass-through.
+- **API key** (`X-API-Key` header, no query-string fallback): custom handler, keys in secret store, constant-time compare (`CryptographicOperations.FixedTimeEquals`), accept a small rotating set.
+- **JWT bearer**: validate issuer/audience/lifetime/signing key in every environment (no exceptions, including local); authorize via named policies, not raw roles. This API **consumes** tokens — issuance belongs in a dedicated identity service.
 
 Cross-cutting:
 
@@ -320,11 +320,11 @@ Full per-scheme rules: [`.ai/references/dotnet-webapi/authentication-schemes.md`
 
 ## Pagination
 
-**Default to cursor-based** for new endpoints — offset pagination is unstable under concurrent inserts. Request: `GET /api/v1.0/orders?pageSize=50&pageToken=<opaque>`. Response: `{ "items": [...], "nextPageToken": "<opaque>" }` (null when exhausted).
+**Default to cursor-based** for new endpoints (offset is unstable under concurrent inserts): `GET .../orders?pageSize=50&pageToken=<opaque>` → `{ "items": [...], "nextPageToken": "<opaque>" }` (null when exhausted).
 
-- `pageToken` is opaque to the client — base64 of an internal cursor (`{lastId, lastCreatedAt}`), never a row offset
-- Maximum `pageSize` is bounded server-side; reject requests exceeding it with `400`
-- Offset pagination (`?page=&pageSize=`) is allowed only for **small bounded admin lists** where stability under inserts is guaranteed (e.g. a fixed config table)
+- `pageToken` is opaque base64 of an internal cursor (`{lastId, lastCreatedAt}`), never a row offset
+- `pageSize` bounded server-side; over-limit requests return `400`
+- Offset pagination allowed only for small bounded admin lists where insert-stability is guaranteed
 
 ---
 
@@ -344,7 +344,7 @@ Accept an `Idempotency-Key` header on `POST` and `PATCH` (and `DELETE` if it tri
 For mutable resources, surface the row version as an `ETag` and require `If-Match` on writes.
 
 - `GET /resources/{id}` returns `ETag: "<rowversion>"`
-- `PUT|PATCH|DELETE /resources/{id}` accepts `If-Match: "<rowversion>"` — when present, mismatch returns `412 Precondition Failed`; when absent, the write proceeds without a concurrency check (lenient default — clients opt in to concurrency control by sending the header)
+- `PUT|PATCH|DELETE /resources/{id}` accepts `If-Match: "<rowversion>"` — present + mismatch → `412 Precondition Failed`; absent → write proceeds (lenient default; clients opt in by sending the header)
 - Wire to EF Core: `[Timestamp] public byte[] RowVersion { get; set; }`
 - The handler maps `DbUpdateConcurrencyException` to `412`
 
@@ -379,7 +379,7 @@ Registration scaffold: [`.ai/references/dotnet-webapi/http-logging.md`](https://
 
 ## Long-running operations
 
-For work that takes longer than a request can reasonably hold open: kickoff `POST` returns `202 Accepted` + `Location: /api/v1.0/operations/{opId}`; status `GET` on that operation returns `200 OK` with `running | succeeded | failed` while in progress, and `303 See Other` + `Location: <result-resource>` on completion. Operations are retained ≥ 24 h after completion so polling clients can observe the terminal state.
+For work too long for a single request: kickoff `POST` returns `202 Accepted` + `Location: /api/v1.0/operations/{opId}`; polling `GET` on the operation returns `200 OK` (`running | succeeded | failed`) while in progress, and `303 See Other` + `Location: <result-resource>` on completion. Retain operations ≥ 24 h so polling clients can observe the terminal state.
 
 ---
 
@@ -437,25 +437,15 @@ Test class scaffold: [`.ai/references/dotnet-webapi/integration-test.md`](https:
 
 ### Manual / exploratory testing — Bruno
 
-Collections in `bruno/`, committed to Git. One folder per module, mirroring API routes.
+Collections in `bruno/`, one folder per module, committed to Git. Base URLs and tokens come from Bruno environments — never hardcoded. When an endpoint changes, update its Bruno request in the same PR; include realistic bodies and useful assertions.
 
-- One folder per module; request files named for the action (`create-order.bru`, `get-order-by-id.bru`)
-- Base URLs and tokens via Bruno environments — never hardcoded in `.bru` files
-- When an endpoint is added or changed, the corresponding Bruno request is added or updated in the same PR
-- Include realistic example bodies and useful assertions (status code, response shape)
-
-Directory layout scaffold: [`.ai/references/dotnet-webapi/bruno-layout.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/bruno-layout.md)
+Layout + naming: [`.ai/references/dotnet-webapi/bruno-layout.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/bruno-layout.md)
 
 ### Performance / load testing — k6
 
-Scripts in `perf/`, committed to Git. One scenario per critical user journey or hot endpoint.
+Scripts in `perf/`, one scenario per critical journey or hot endpoint. Naming: `<endpoint-or-journey>.<profile>.js`, profile ∈ `smoke | load | stress | soak`. Every script declares `thresholds` for `http_req_duration` and `http_req_failed` — a failed threshold fails CI. Env via `K6_BASE_URL`; auth via `perf/lib/` helpers — never hardcoded. CI: smoke blocks every PR; load / stress / soak on demand.
 
-- Scenario naming: `<endpoint-or-journey>.<profile>.js` where `<profile>` ∈ `smoke | load | stress | soak`
-- Every script declares `thresholds` for `http_req_duration` and `http_req_failed` — a failed threshold fails the CI job
-- Environment via `K6_BASE_URL`; auth via shared helpers in `perf/lib/` — never hardcode hosts or tokens
-- CI: smoke runs on every PR (blocking); load / stress / soak on demand; output JSON via `--out json=results.json`
-
-Layout + sample script + profile definitions: [`.ai/references/dotnet-webapi/k6-scenarios.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/k6-scenarios.md)
+Layout + sample script + profile defs: [`.ai/references/dotnet-webapi/k6-scenarios.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/k6-scenarios.md)
 
 ---
 

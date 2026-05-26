@@ -3,8 +3,10 @@ name: build-stacks-drift
 on:
   pull_request:
     paths:
+      - '.ai/base-instructions.md'
       - '.ai/stacks/**'
       - 'scripts/build-stacks.sh'
+      - 'scripts/check-claude-md-size.sh'
       - '.github/workflows/build-stacks-drift.yml'
   push:
     branches: [main]
@@ -26,3 +28,6 @@ jobs:
             echo "::error::then run scripts/build-stacks.sh and commit the result."
             exit 1
           fi
+
+      - name: Fail if assembled CLAUDE.md would exceed Claude Code's 40k performance budget
+        run: ./scripts/check-claude-md-size.sh

@@ -75,12 +75,17 @@ at `.ai/workflow-snapshot.md`.
 
 Read it for conventions on commits, branching, testing, etc.
 Implementer/meta repos (e.g. agent-pipeline, bridge, ideas-lab)
-These repos implement part of the workflow. The workflow doc is design input,
-not background context. Changes to the repo may require updates to the workflow.
+These repos implement part of the workflow AND consume it for their own
+day-to-day work. The implementer role is additive, not exclusive: they follow
+all workflow conventions (commits, branching, thought routing, brainstorm
+handoffs) like any consumer, and additionally treat the workflow doc as design
+input — changes to the repo may require corresponding updates to the workflow.
 markdown## Role in the personal dev workflow
 
-This repo IMPLEMENTS part of the personal dev workflow. It is not a consumer —
-it is workflow infrastructure.
+This repo IMPLEMENTS part of the personal dev workflow AND consumes it for
+its own day-to-day work. The implementer role is additive: it follows all
+workflow conventions like any consumer, and additionally treats the workflow
+doc as design input.
 
 **Design source:**
 - Workflow doc: `ai-instructions` repo, file
@@ -265,6 +270,25 @@ Different from the "where" — about when to capture:
 
 Promotion (rough idea → spec → issue → PR) happens naturally once the
 thought is in the system.
+
+Implementer-repo routing addendum (per Decision #11)
+Implementer repos (bridge, agent-pipeline, ideas-lab, ai-instructions
+itself) face an extra capture-time routing decision: is this thought about
+the workflow itself, or about *this* implementer repo's behavior?
+
+Rule: if the thought changes how the implementer repo works internally,
+it goes there (`<repo>` Issue or `<repo>/designs/`). If it changes how the
+workflow is described or how *all* implementer repos should behave, it
+goes to `ai-instructions`.
+
+Test when in doubt: "would this affect another implementer repo too?" —
+if yes, it's a workflow change. If no, it's a repo change.
+
+Examples (in `bridge`):
+- "Agent launcher misses runs >24h old" → bridge Issue (bridge behavior)
+- "I want a `brg status` subcommand" → bridge Issue (bridge feature)
+- "Workflow doc should say X about agent launchers" → ai-instructions
+- "Repo-roles framing is wrong" → ai-instructions (affects all implementers)
 
 Boundary with Superpowers (per Decision #10)
 Once a thought is routed, if the destination is creative work (a new
@@ -506,6 +530,31 @@ Decisions
 
     Mnemonic: routing decides location; Superpowers produces content.
 
+11. Implementer repos are also consumers (resolved 2026-05-26)
+    The original consumer-vs-implementer framing was mutually exclusive
+    ("It is not a consumer — it is workflow infrastructure"). That's
+    wrong. The implementer role is additive, not exclusive.
+
+    Corrected framing: every repo consumes the workflow for its own
+    day-to-day work (commits, branching, thought routing, brainstorm
+    handoffs). Implementer repos additionally treat the workflow doc as
+    design input and may need to write back to it when their own design
+    evolves.
+
+    Consequence #1: CLAUDE.md template for implementer repos updated to
+    "IMPLEMENTS … AND consumes …" wording (see Repo Roles and CLAUDE.md
+    Patterns section).
+
+    Consequence #2: implementer repos face a capture-time routing
+    question consumer repos don't have — "is this thought about the
+    workflow or about this repo?" Resolved by the Implementer-repo
+    routing addendum under Routing Daily Thoughts.
+
+    Follow-up (separate sessions): when backfilling implementer-role
+    framing in `bridge/CLAUDE.md` and future `agent-pipeline/CLAUDE.md`,
+    use the corrected additive wording — not the original exclusive
+    phrasing from the seed.
+
 CC Skills for Workflow Steps
 Some workflow steps recur often enough — and have stable enough shape —
 that they're candidates to become CC Skills. Workflow skills live as
@@ -559,8 +608,8 @@ after the first two ship.
 
 Open Questions for CC CLI Session
 
-(All 10 questions resolved 2026-05-25. New questions land here as they
-come up.)
+(All 11 questions resolved (10 on 2026-05-25, #11 on 2026-05-26). New
+questions land here as they come up.)
 
 Next Steps
 

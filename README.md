@@ -129,6 +129,18 @@ This concatenates each `_partials/<base>.md` + `_layers/<base>-<flavour>.md` pai
 
 The build script currently handles `dotnet-*` only. Extending it to a second split family (e.g. `node-*`) is a one-line change to its glob.
 
+### Size budget (CI + local hook)
+
+The assembled `CLAUDE.md` a consumer ends up with (`base-instructions.md` + one stack overlay) must stay under **39,000 bytes** — that's 1k below Claude Code's 40k performance warning. The check lives in `scripts/check-claude-md-size.sh` and runs in the `build-stacks-drift` workflow.
+
+For fail-fast feedback locally, enable the bundled pre-commit hook once per clone:
+
+```bash
+git config core.hooksPath scripts/git-hooks
+```
+
+The hook runs the size check only when a commit touches `.ai/base-instructions.md`, anything under `.ai/stacks/`, or either build/check script. Use `git commit --no-verify` to bypass for unrelated commits if needed.
+
 ## Keeping a project in sync
 
 When `base-instructions.md` or the stack overlay changes, consumers re-run `/sync-ai-instructions <stack>` to regenerate their `CLAUDE.md` / copilot / SKILL files. The skill reports the source commit SHA so you know which version of the instructions is in use.

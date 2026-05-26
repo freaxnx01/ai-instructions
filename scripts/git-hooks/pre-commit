@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Local mirror of the build-stacks-drift CI workflow's size check.
+#
+# Runs scripts/check-claude-md-size.sh when a commit touches files that
+# affect the assembled CLAUDE.md size — base instructions, any stack,
+# the build script, or the check script itself. Otherwise no-op so the
+# hook stays out of the way of unrelated commits.
+#
+# Enable once per clone: `git config core.hooksPath scripts/git-hooks`
+# Bypass for an individual commit: `git commit --no-verify` (use sparingly).
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+if ! git diff --cached --name-only --diff-filter=ACMR | grep -qE '^(\.ai/base-instructions\.md|\.ai/stacks/|scripts/build-stacks\.sh|scripts/check-claude-md-size\.sh)'; then
+    exit 0
+fi
+
+exec scripts/check-claude-md-size.sh

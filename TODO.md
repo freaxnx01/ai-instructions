@@ -22,10 +22,10 @@ many entries below trace back to a specific Decision.
 
 - [ ] **agent-pipeline**: create `WORKFLOW-ROLE.md` at repo root per
       Decision #13. No edits to CLAUDE.md needed (it's regenerated).
-- [ ] **First real product repo adoption** (e.g. `quicktask-vikunja`):
-      run `/sync-ai-instructions`, create `PROJECT-OVERVIEW.md` per
-      Decision #14 schema, optionally `WORKFLOW-ROLE.md` if implementer.
-      This is the validation step — surfaces any remaining gaps.
+- [ ] **First real product repo adoption** (`quicktask-vikunja`):
+      sync done. PROJECT-OVERVIEW.md drafted; AGENT-NOTES.md to be
+      migrated from existing `CLAUDE.project.md`. Pending the cross-
+      repo commit step. Validation step — surfaces any remaining gaps.
 - [ ] **ideas-lab**: add `.obsidian/` to `.gitignore`; create
       `WORKFLOW-ROLE.md`; open the local clone as an Obsidian vault
       per Decision #4.
@@ -70,3 +70,5 @@ Per Decision #9 ordering, expanded per the second open question above.
 - [x] Create `WORKFLOW-ROLE.md` for this repo (2026-05-27, commit
       `e022b4f`).
 - [x] Decision #14 — `PROJECT-OVERVIEW.md` pattern (2026-05-27).
+- [x] Decision #15 — `AGENT-NOTES.md` pattern for operational/agent-facing
+      project context (2026-05-27).

@@ -651,6 +651,62 @@ Decisions
       from the pre-rename `dotnet.md` overlay. Clears naturally on next
       `/sync-ai-instructions` regen.
 
+15. Operational/agent-facing project context (resolved 2026-05-27)
+    Surfaced during the quicktask-vikunja adoption prep: there is a class
+    of project-specific content that doesn't fit any earlier decision —
+    operational gotchas an agent needs to know (e.g. "share-intent
+    lifecycle is the #1 bug source"), project-specific commands (e.g.
+    `just apk`), and repo-local workflow conventions (e.g. autonomous-
+    work branch naming, PR body templates). It is:
+    - Not strategic (so not `PROJECT-OVERVIEW.md`)
+    - Not workflow placement (so not `WORKFLOW-ROLE.md`)
+    - Regen-fragile (so not the regenerated `CLAUDE.md`)
+
+    quicktask-vikunja had been hand-rolling a `CLAUDE.project.md` plus a
+    hand-restored `> Also read CLAUDE.project.md` callout in CLAUDE.md
+    (manually re-added after every sync). Confirmed via grep that the
+    callout survived recent syncs only because the user kept restoring
+    it.
+
+    Pattern (parallel to #13 and #14): `AGENT-NOTES.md` at repo root.
+    `.ai/base-instructions.md` carries a third conditional reference
+    line that appears in every synced CLAUDE.md. Survives sync because
+    it's a separate file. Consumer repos that don't need it just don't
+    create it.
+
+    Scope of `AGENT-NOTES.md`:
+    - Operational gotchas (the "sharp edges" agents must know)
+    - Project-specific commands (replaces the role traditional CLAUDE.md
+      `## Essential Commands` would play, since CLAUDE.md is now
+      regenerated)
+    - Repo-local workflow conventions (branch naming, PR body
+      requirements, project-specific labels)
+
+    What does NOT go in `AGENT-NOTES.md`:
+    - Strategic framing → `PROJECT-OVERVIEW.md`
+    - Workflow placement → `WORKFLOW-ROLE.md`
+    - Generic conventions → upstream in `base-instructions.md` or stack
+    - Per-feature requirements → `docs/specs/` or `designs/`
+    - Architectural decisions → `docs/adr/`
+
+    Filename rationale: `AGENT-NOTES.md` chosen over `AGENT-OPERATIONS.md`
+    / `CLAUDE.local.md` / `AGENT-GUIDANCE.md` because it's short,
+    agent-neutral (not Claude-specific), UPPERCASE matches repo
+    convention, and "notes" is broad enough to cover the grab-bag of
+    project-specific agent-facing content without forcing a sub-taxonomy.
+
+    Implementation:
+    - `.ai/base-instructions.md` updated with the third conditional
+      reference line.
+    - Per-product-repo follow-up: create `AGENT-NOTES.md` on adoption
+      if there's project-specific operational content to preserve.
+    - quicktask-vikunja follow-up (this session): migrate
+      `CLAUDE.project.md` content into `PROJECT-OVERVIEW.md` (strategic
+      parts) + `AGENT-NOTES.md` (operational/commands/workflow-
+      conventions parts). Remove the hand-maintained callout from
+      CLAUDE.md and re-sync — the conditional references will handle it
+      automatically going forward.
+
 CC Skills for Workflow Steps
 Some workflow steps recur often enough — and have stable enough shape —
 that they're candidates to become CC Skills. Workflow skills live as
@@ -704,8 +760,8 @@ after the first two ship.
 
 Open Questions for CC CLI Session
 
-(All 14 questions resolved — 10 on 2026-05-25, #11+#12 on 2026-05-26,
-#13+#14 on 2026-05-27. New questions land here as they come up.)
+(All 15 questions resolved — 10 on 2026-05-25, #11+#12 on 2026-05-26,
+#13+#14+#15 on 2026-05-27. New questions land here as they come up.)
 
 Next Steps
 

@@ -611,6 +611,46 @@ Decisions
     - `agent-pipeline/WORKFLOW-ROLE.md` to be created in a separate
       session.
 
+14. Project-specific content in regenerated CLAUDE.md (resolved 2026-05-27)
+    Verified via the sync skill source: `/sync-ai-instructions` rewrites
+    CLAUDE.md from scratch on every run (header + base + stack — no
+    preservation, no merge). Anything hand-filled into the regenerated
+    CLAUDE.md is lost on next sync.
+
+    Pattern (parallel to Decision #13): project-specific content lives
+    in `PROJECT-OVERVIEW.md` at repo root. `.ai/base-instructions.md`
+    has a second conditional reference line that tells CC to read it
+    if present.
+
+    PROJECT-OVERVIEW.md schema (inspired by the CAS-AISE structure):
+    - Name, Purpose, Status
+    - Stakeholders — who cares and why
+    - Vision — what's the world like when this exists
+    - Core customer need — the problem being solved
+    - Key features — headline capabilities
+    - Architecture — one-paragraph shape (depth lives in ADRs / specs)
+
+    Lifecycle distinction from per-feature docs:
+    - PROJECT-OVERVIEW.md → stable, evergreen, one per repo.
+    - PRD / spec (`docs/specs/<feature>.md` or `designs/<feature>.md`) →
+      per-feature, mutable, many over time. Reference PO instead of
+      re-deriving stakeholder/vision context.
+    - ADR (`docs/adr/NNNN-<slug>.md`) → architectural decisions,
+      per Decision #3's hybrid rule.
+
+    Hand-written CLAUDE.md repos can keep an inline Project Overview
+    section if they prefer (bridge does) — same flexibility as #13.
+
+    Implementation:
+    - `.ai/base-instructions.md` updated with the second conditional
+      reference line.
+    - Per-product-repo follow-up: create `PROJECT-OVERVIEW.md` on
+      adoption.
+    - The Project Overview TODO block currently visible in this repo's
+      stale root `CLAUDE.md` is NOT in any source file — it's leftover
+      from the pre-rename `dotnet.md` overlay. Clears naturally on next
+      `/sync-ai-instructions` regen.
+
 CC Skills for Workflow Steps
 Some workflow steps recur often enough — and have stable enough shape —
 that they're candidates to become CC Skills. Workflow skills live as
@@ -664,8 +704,8 @@ after the first two ship.
 
 Open Questions for CC CLI Session
 
-(All 13 questions resolved — 10 on 2026-05-25, #11+#12 on 2026-05-26,
-#13 on 2026-05-27. New questions land here as they come up.)
+(All 14 questions resolved — 10 on 2026-05-25, #11+#12 on 2026-05-26,
+#13+#14 on 2026-05-27. New questions land here as they come up.)
 
 Next Steps
 

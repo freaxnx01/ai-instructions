@@ -9,16 +9,6 @@ many entries below trace back to a specific Decision.
 
 ## Open questions (not yet decisions)
 
-- [ ] **CLAUDE.md for a real product repo.** How does Decision #13's
-      `WORKFLOW-ROLE.md` pattern interact with a real product repo
-      (e.g. `quicktask-vikunja`) that uses `/sync-ai-instructions` and
-      may need bespoke per-project content (architecture, domain
-      context, deployment notes) beyond what base+stack provides?
-      Is a similar separate-file pattern needed for project-specific
-      overview content, or does it live in the regenerated CLAUDE.md
-      via some other mechanism? Promote to Open Question #14 in the
-      workflow doc when explored.
-
 - [ ] **Workflow skill chain: Idea → Issue → PR → Review → Merge.**
       Expand Decision #9's CC Skills candidate list to cover the full
       implementation lifecycle, not just idea-to-spec and idea-to-Issue.
@@ -32,6 +22,10 @@ many entries below trace back to a specific Decision.
 
 - [ ] **agent-pipeline**: create `WORKFLOW-ROLE.md` at repo root per
       Decision #13. No edits to CLAUDE.md needed (it's regenerated).
+- [ ] **First real product repo adoption** (e.g. `quicktask-vikunja`):
+      run `/sync-ai-instructions`, create `PROJECT-OVERVIEW.md` per
+      Decision #14 schema, optionally `WORKFLOW-ROLE.md` if implementer.
+      This is the validation step — surfaces any remaining gaps.
 - [ ] **ideas-lab**: add `.obsidian/` to `.gitignore`; create
       `WORKFLOW-ROLE.md`; open the local clone as an Obsidian vault
       per Decision #4.
@@ -75,3 +69,4 @@ Per Decision #9 ordering, expanded per the second open question above.
       (2026-05-27, bridge commit `4c844c5`).
 - [x] Create `WORKFLOW-ROLE.md` for this repo (2026-05-27, commit
       `e022b4f`).
+- [x] Decision #14 — `PROJECT-OVERVIEW.md` pattern (2026-05-27).

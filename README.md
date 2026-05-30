@@ -13,6 +13,7 @@ Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each pr
     dotnet-blazor.md            ← generated: dotnet-core + Blazor layer
     dotnet-webapi.md            ← generated: dotnet-core + WebAPI layer
     flutter.md                  ← single-file overlay (no layer split)
+    go.md                       ← single-file overlay (no layer split)
     _partials/
       dotnet-core.md            ← shared .NET conventions (C#, EF, Docker,
                                   logging, justfile, CI, security, basic
@@ -85,6 +86,7 @@ This repo's root `CLAUDE.md`, `.github/copilot-instructions.md`, and `SKILL.md` 
 | `dotnet-blazor` | `.ai/stacks/dotnet-blazor.md` | .NET 10 · ASP.NET Core · Blazor + MudBlazor · EF Core · xUnit / bUnit / Playwright · Serilog + OpenTelemetry · Alpine Docker |
 | `dotnet-webapi` | `.ai/stacks/dotnet-webapi.md` | .NET 10 · ASP.NET Core REST API · Asp.Versioning.Http · ProblemDetails · OpenAPI + Scalar · JWT / API key / pass-through auth · `WebApplicationFactory` + Testcontainers · Bruno · k6 · Kiota |
 | `flutter` | `.ai/stacks/flutter.md` | Flutter / Dart |
+| `go` | `.ai/stacks/go.md` | Go (modules) · Cobra CLI · Bubble Tea / Bubbles / Lipgloss TUI · stdlib `net/http` ServeMux · `log/slog` · stdlib `testing` + hand-rolled fakes · `golangci-lint` · `govulncheck` · ldflags version injection |
 | `ci` | `.ai/stacks/ci.md` | Bash · GitHub Actions reusable workflows + composite actions · `actionlint` + `shellcheck` · `act` |
 
 To add a new stack: see *Adding a new stack* below.

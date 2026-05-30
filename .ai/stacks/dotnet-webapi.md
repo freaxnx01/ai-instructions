@@ -140,19 +140,17 @@ dotnet list package --vulnerable --fail-on-severity high
 dotnet list package --outdated
 ```
 
-**PDB symbols:** Release builds include embedded PDB symbols (`<DebugType>embedded</DebugType>` in `Directory.Build.props`) so exception stack traces contain source file names and line numbers in production. Never strip PDB symbols from release or Docker builds.
+**PDB symbols:** Release builds embed PDB symbols (`<DebugType>embedded</DebugType>` in `Directory.Build.props`) so production stack traces carry source file + line numbers. Never strip them from release or Docker builds.
 
 ---
 
 ## Essential just Recipes
 
-Projects using this stack ship a repo-root `justfile` (using [casey/just](https://github.com/casey/just)) standardizing the common commands. Recipe names are canonical; recipe bodies may use project-local variables.
+Projects ship a repo-root `justfile` ([casey/just](https://github.com/casey/just)) standardizing common commands — canonical recipe names, project-local bodies. Canonical groups: build/run, testing, Docker Compose, quality (`lint`, `outdated`, `vuln`), versioning (`version`, `bump-*`), release (`changelog`, `release`, `package`), `clean`. Document each with a leading `# <description>`; the default recipe runs `just --list --unsorted`.
 
-Canonical recipes exist for: build/run (`build`, `watch`, `run-edge`), testing (`test`, `test-unit`, `test-coverage`), Docker Compose (`docker-run`, `up`, `down`, `logs`, `rebuild`), quality (`lint`, `outdated`, `vuln`), versioning (`version`, `version-set`, `bump-major|minor|patch`, `bump-auto`), release (`changelog`, `release-notes`, `release`, `release-auto`, `push-release`, `package`), and `clean`. Document each recipe with a leading `# <description>` comment; the default recipe runs `just --list --unsorted` so `just` with no args prints the documented set.
+A reference `justfile` lives at `.ai/examples/dotnet/justfile` — copy it and customize the top-of-file variables. Host-specific recipes ship as `[unix]` + `[windows]` pairs (no WSL needed); tool/project-specific ones (`release-notes`, `package`) ship as stubs with per-OS examples in comments.
 
-A reference `justfile` lives at `.ai/examples/dotnet/justfile` — copy it and customize the top-of-file variables. Host-specific recipes (`run-edge`, `clean`, version/release helpers using `sed`) ship as `[unix]` + `[windows]` pairs so Windows contributors do not need WSL; tool/project-specific recipes (`release-notes`, `package`) ship as stubs with per-OS examples in comments.
-
-Install (requires just ≥ 1.20): `cargo install just` / `brew install just` / `winget install Casey.Just` / `sudo apt install just`. CI: `extractions/setup-just@v2`.
+Install (just ≥ 1.20): `cargo install just` / `brew install just` / `winget install Casey.Just` / `sudo apt install just`. CI: `extractions/setup-just@v2`.
 
 Full recipe list with descriptions: [`.ai/references/dotnet/justfile-recipes.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/justfile-recipes.md)
 
@@ -213,7 +211,7 @@ Base rules (SemVer, Conventional Commits → bump mapping, git-cliff) live in `b
 
 ## CI/CD (GitHub Actions baseline)
 
-Pipeline stages: `build` → `test` → `security-scan` → `docker-build` → `push`. Build and test run on every PR; vulnerable-dependency scan fails the build on HIGH/CRITICAL; container image built and pushed only on `main` after tests pass.
+Pipeline stages: `build` → `test` → `security-scan` → `docker-build` → `push` (base CI rules apply): build/test on every PR, vuln scan fails on HIGH/CRITICAL, image pushed only on `main` after tests pass.
 
 Layer-specific CI jobs (E2E with Playwright for Blazor, k6 perf smoke for WebAPI) are added by the layer overlay.
 
@@ -250,7 +248,7 @@ In addition to the base guardrails:
 
 # .NET WebAPI Layer
 
-Backend-only ASP.NET Core REST API projects (no Blazor, no UI). Composed on top of the shared `dotnet-core` partial.
+Backend-only ASP.NET Core REST API projects (no Blazor/UI), composed on the shared `dotnet-core` partial.
 
 ---
 
@@ -264,8 +262,8 @@ Full table: [`.ai/references/dotnet/tech-stack.md`](https://github.com/freaxnx01
 
 ## API Design — Minimal API
 
-- All endpoints grouped by module via `IEndpointRouteBuilder` extension methods
-- Route prefix: `/api/v{version}/{module}/...` — see *API versioning* below for the URL format
+- Endpoints grouped by module via `IEndpointRouteBuilder` extension methods
+- Route prefix `/api/v{version}/{module}/...` — URL format under *API versioning* below
 - One handler per file when the body is non-trivial; inline lambdas only for true one-liners
 - FluentValidation runs at the boundary, before any handler logic
 
@@ -273,17 +271,17 @@ Endpoint group scaffold: [`.ai/references/dotnet/endpoint-group.md`](https://git
 
 ### HTTP status code conventions
 
-Non-obvious rules: `201 Created` must include a `Location` header to the new resource; `202 Accepted` must include a `Location` to the status resource; use `422` (not `400`) for semantic validation failures (body parsed OK, content invalid); `429` must include `Retry-After`.
+Non-obvious rules: `201 Created` and `202 Accepted` must include a `Location` header (to the new resource / status resource respectively); use `422` (not `400`) for semantic validation failures (body parsed OK, content invalid); `429` must include `Retry-After`.
 
 ### HTTP GET with request body — forbidden for new endpoints
 
-GET bodies have undefined semantics (RFC 9110) — proxies and caches may drop them. New endpoints: use query params, or `POST /search` for large/sensitive filter sets. Legacy endpoints: allowed for backwards-compat only; mark `[Obsolete]` and emit a `Sunset` header.
+GET bodies have undefined semantics (RFC 9110) — proxies and caches may drop them. New endpoints: use query params, or `POST /search` for large/sensitive filter sets. Legacy: allowed for backwards-compat only; mark `[Obsolete]` and emit a `Sunset` header.
 
 ### Errors — always ProblemDetails
 
-- Every error response — including those produced by middleware and model binding — is RFC 9457 `ProblemDetails`
+- Every error response — including from middleware and model binding — is RFC 9457 `ProblemDetails`
 - Never return raw strings, anonymous `{ error: "..." }` objects, or HTML error pages
-- Populate `type`, `title`, `status`, `detail`, `instance` on every response; add a `traceId` extension keyed on the current `Activity.TraceId`
+- Populate `type`, `title`, `status`, `detail`, `instance`; add a `traceId` extension from the current `Activity.TraceId`
 
 Registration scaffold: [`.ai/references/dotnet-webapi/problem-details.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/problem-details.md)
 
@@ -291,11 +289,11 @@ Registration scaffold: [`.ai/references/dotnet-webapi/problem-details.md`](https
 
 ## API Versioning
 
-Use `Asp.Versioning.Http` with **URL-segment** versioning. Format: `v1.0`, `v2.0`, `v2.1` — `MAJOR.MINOR`. The minor segment is part of the URL even when only the major bumps, so the URL shape stays consistent across the lifetime of the API.
+`Asp.Versioning.Http` with **URL-segment** versioning. Format `v1.0`, `v2.0`, `v2.1` (`MAJOR.MINOR`). The minor segment stays in the URL even when only the major bumps, keeping the URL shape stable across the API's lifetime.
 
-- **Unversioned URLs (`/api/orders/...`) are allowed only for backward compatibility.** They resolve to v1.0 explicitly — never to "latest". Rolling out v2.0 must not change what an unversioned caller hits.
-- Deprecate an endpoint with `.HasDeprecatedApiVersion(1.0)` plus a `Sunset: <RFC 7231 date>` header on responses.
-- Removal is a separate step from deprecation — no version is removed without an announced sunset window.
+- **Unversioned URLs (`/api/orders/...`) are allowed only for backward compatibility** — they resolve to v1.0 explicitly, never "latest". Rolling out v2.0 must not change what an unversioned caller hits.
+- Deprecate with `.HasDeprecatedApiVersion(1.0)` plus a `Sunset: <RFC 7231 date>` response header.
+- Removal is separate from deprecation — no version is removed without an announced sunset window.
 
 Registration scaffold: [`.ai/references/dotnet-webapi/api-versioning.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/api-versioning.md)
 
@@ -303,7 +301,7 @@ Registration scaffold: [`.ai/references/dotnet-webapi/api-versioning.md`](https:
 
 ## Authentication
 
-**One scheme per API project.** Choice is made at project bootstrap and applies to every endpoint; do not mix. Three approved schemes (full rules in the reference doc below):
+**One scheme per API project**, chosen at bootstrap and applied to every endpoint — never mixed. Three approved schemes (full rules in the reference doc):
 
 - **Pass-through** (BFF / wrapper APIs): forward `Authorization` upstream verbatim; do not validate, decode, log, or call `AddAuthentication()`. Any non-proxied endpoint disqualifies the project from pass-through.
 - **API key** (`X-API-Key` header, no query-string fallback): custom handler, keys in secret store, constant-time compare (`CryptographicOperations.FixedTimeEquals`), accept a small rotating set.
@@ -324,18 +322,18 @@ Full per-scheme rules: [`.ai/references/dotnet-webapi/authentication-schemes.md`
 
 - `pageToken` is opaque base64 of an internal cursor (`{lastId, lastCreatedAt}`), never a row offset
 - `pageSize` bounded server-side; over-limit requests return `400`
-- Offset pagination allowed only for small bounded admin lists where insert-stability is guaranteed
+- Offset pagination only for small bounded admin lists where insert-stability is guaranteed
 
 ---
 
 ## Idempotency for unsafe methods
 
-Accept an `Idempotency-Key` header on `POST` and `PATCH` (and `DELETE` if it triggers side-effects beyond removing a row).
+Accept `Idempotency-Key` on `POST`/`PATCH` (and `DELETE` if it has side-effects beyond removing a row).
 
 - Cache the response keyed by `(route, key, principal)` for 24 h
-- A retry with the same key returns the cached response — no duplicate side-effect, no second `201`
-- A retry with the same key but a *different* request body is rejected with `409 Conflict`
-- Keys are client-supplied opaque strings; the API does not generate them
+- Same key → cached response returned (no duplicate side-effect, no second `201`)
+- Same key but a *different* request body → `409 Conflict`
+- Keys are client-supplied opaque strings; the API never generates them
 
 ---
 
@@ -345,8 +343,7 @@ For mutable resources, surface the row version as an `ETag` and require `If-Matc
 
 - `GET /resources/{id}` returns `ETag: "<rowversion>"`
 - `PUT|PATCH|DELETE /resources/{id}` accepts `If-Match: "<rowversion>"` — present + mismatch → `412 Precondition Failed`; absent → write proceeds (lenient default; clients opt in by sending the header)
-- Wire to EF Core: `[Timestamp] public byte[] RowVersion { get; set; }`
-- The handler maps `DbUpdateConcurrencyException` to `412`
+- EF Core: `[Timestamp] public byte[] RowVersion { get; set; }`; the handler maps `DbUpdateConcurrencyException` to `412`
 
 ---
 
@@ -363,8 +360,8 @@ Registration scaffold: [`.ai/references/dotnet-webapi/rate-limiting.md`](https:/
 ## CORS
 
 - Explicit origin allowlist per environment via `WithOrigins(...)`
-- **Never** combine `AllowAnyOrigin()` with `AllowCredentials()` — the combination is rejected by browsers and indicates a misconfiguration
-- Methods and headers are scoped to what the API actually accepts — no blanket `AllowAnyMethod()`
+- **Never** combine `AllowAnyOrigin()` with `AllowCredentials()` — browsers reject it; it signals a misconfiguration
+- Scope methods and headers to what the API accepts — no blanket `AllowAnyMethod()`
 - Preflight cache via `SetPreflightMaxAge(TimeSpan.FromHours(1))`
 
 ---
@@ -379,7 +376,7 @@ Registration scaffold: [`.ai/references/dotnet-webapi/http-logging.md`](https://
 
 ## Long-running operations
 
-For work too long for a single request: kickoff `POST` returns `202 Accepted` + `Location: /api/v1.0/operations/{opId}`; polling `GET` on the operation returns `200 OK` (`running | succeeded | failed`) while in progress, and `303 See Other` + `Location: <result-resource>` on completion. Retain operations ≥ 24 h so polling clients can observe the terminal state.
+For work too long for one request: the kickoff `POST` returns `202 Accepted` + `Location: /api/v1.0/operations/{opId}`; polling `GET` returns `200 OK` (`running | succeeded | failed`) in progress, then `303 See Other` + `Location: <result-resource>` on completion. Retain operations ≥ 24 h so clients can observe the terminal state.
 
 ---
 
@@ -394,9 +391,9 @@ Registration scaffold: [`.ai/references/dotnet-webapi/response-compression.md`](
 
 ## OpenAPI & Scalar
 
-- API metadata (Title / Version / Description / Contact / License) is mandatory — published APIs without metadata are rejected in review
+- API metadata (Title / Version / Description / Contact / License) is mandatory — published APIs without it are rejected in review
 - Scalar UI at `/scalar`; OpenAPI document at `/openapi/v1.0.json`
-- Code samples enabled for **bash curl** and **PowerShell** at minimum; other clients are opt-in
+- Code samples enabled for **bash curl** and **PowerShell** at minimum; other clients opt-in
 - Deprecated endpoints carry the OpenAPI `deprecated: true` flag *and* return a `Sunset` response header
 
 Registration scaffold: [`.ai/references/dotnet-webapi/openapi-scalar.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/openapi-scalar.md)
@@ -418,7 +415,7 @@ kiota generate -l CSharp -d https://api.example.com/openapi/v1.0.json -o ./clien
 
 ## Testing (WebAPI additions)
 
-The unit-test conventions and the baseline `<Module>.UnitTests` / `<Module>.IntegrationTests` layout live in the `dotnet-core` partial. For WebAPI projects, the integration test project uses `WebApplicationFactory` + Testcontainers, and one optional contract project may be added:
+Unit-test conventions and the baseline `<Module>.UnitTests` / `<Module>.IntegrationTests` layout live in the `dotnet-core` partial. For WebAPI, the integration project uses `WebApplicationFactory` + Testcontainers, plus one optional contract project:
 
 ```
 tests/
@@ -431,13 +428,13 @@ No bUnit, no Playwright — those are Blazor-stack concerns.
 
 - `WebApiFactory : WebApplicationFactory<Program>` swaps real infrastructure for Testcontainers (Postgres, Redis, etc.)
 - Each test class owns its database via Testcontainers — no shared mutable state across classes
-- Authentication in tests: register a test scheme that injects a known principal — never call the real identity provider
+- Auth in tests: register a test scheme injecting a known principal — never call the real identity provider
 
 Test class scaffold: [`.ai/references/dotnet-webapi/integration-test.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/integration-test.md)
 
 ### Manual / exploratory testing — Bruno
 
-Collections in `bruno/`, one folder per module, committed to Git. Base URLs and tokens come from Bruno environments — never hardcoded. When an endpoint changes, update its Bruno request in the same PR; include realistic bodies and useful assertions.
+Collections in `bruno/`, one folder per module, committed to Git. Base URLs and tokens come from Bruno environments — never hardcoded. When an endpoint changes, update its Bruno request in the same PR with realistic bodies and useful assertions.
 
 Layout + naming: [`.ai/references/dotnet-webapi/bruno-layout.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/bruno-layout.md)
 
@@ -457,6 +454,6 @@ WebAPI-specific init-time checklist (inherits the base + .NET checklists) lives 
 
 ## Agent Guardrails (WebAPI additions)
 
-Each rule in this layer (single auth scheme, no GET bodies, `ProblemDetails` only, CORS, sensitive-header logging, URL-segment versioning, Kiota, `Location` on 201/202, JWT validation, no token issuance) is enforced as written above. One additional guardrail not stated elsewhere:
+Every rule in this layer is enforced as written above. One additional guardrail:
 
 - Do not create POST or PATCH endpoints without considering whether `Idempotency-Key` should be supported

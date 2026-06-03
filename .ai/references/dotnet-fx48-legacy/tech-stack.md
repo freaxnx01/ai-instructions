@@ -11,7 +11,7 @@
 | JSON | [Newtonsoft.Json](https://www.newtonsoft.com/json) 13.x |
 | Logging | [NLog](https://nlog-project.org/) 5.x, configured via `NLog.config` |
 | Config | `app.config` / `web.config` + `System.Configuration`; binding redirects via `AutoGenerateBindingRedirects` |
-| Tests | [xUnit](https://xunit.net/) **desktop runner** (`xunit.runner.console` / `xunit.runner.visualstudio`), [Moq](https://github.com/moq/moq4), [Shouldly](https://github.com/shouldly/shouldly), [Nancy.Testing](https://github.com/NancyFx/Nancy), [RestSharp](https://restsharp.dev/) |
+| Tests | [xUnit](https://xunit.net/) **desktop runner** (`xunit.runner.console` / `xunit.runner.visualstudio`), [Moq](https://github.com/moq/moq4), [Shouldly](https://github.com/shouldly/shouldly), [Nancy.Testing](https://github.com/NancyFx/Nancy), [RestSharp](https://restsharp.dev/) (out-of-process HTTP smoke tests against a running self-host) |
 | Build | [Cake](https://cakebuild.net/) (`build.ps1` bootstrap → `build.cake`) driving full-framework **`msbuild.exe`** (not `dotnet build`); 7-Zip for packaging |
 | Versioning | Centralized in a repo-root `Directory.Build.props` — one `<Version>` for **all** assemblies |
 | CI | GitLab CI running `powershell build.ps1` on a **Windows** runner (alternative: Azure DevOps Pipelines) |

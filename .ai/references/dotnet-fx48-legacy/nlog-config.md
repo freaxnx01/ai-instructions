@@ -30,5 +30,4 @@ private static readonly NLog.Logger Log = NLog.LogManager.GetCurrentClassLogger(
 Log.Info("Started widget {WidgetId}", id);
 ```
 
-Configure structured properties (`${event-properties}`) and an OTLP/JSON target
-if the service ships logs to a collector. Never log secrets or full request bodies.
+Named placeholders like `{WidgetId}` render positionally by default — wire `${event-properties}` or a JSON layout to capture them as structured properties, and add an OTLP/JSON target if the service ships logs to a collector. Never log secrets or full request bodies.

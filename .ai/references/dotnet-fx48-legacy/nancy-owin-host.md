@@ -31,6 +31,7 @@ namespace Acme.Service.Rest.Modules
                 var created = widgets.Create(dto);
                 return Negotiate
                     .WithStatusCode(HttpStatusCode.Created)
+                    .WithHeader("Location", $"/widgets/{created.Id}")
                     .WithModel(created);
             });
         }

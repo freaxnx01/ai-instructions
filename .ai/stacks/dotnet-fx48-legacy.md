@@ -60,7 +60,7 @@ centralized `Directory.Build.props`.
   project opts in — add `using` directives explicitly.
 - `async`/`await` end-to-end; **never** `Task.Result` / `.GetAwaiter().GetResult()`
   (classic SynchronizationContext deadlocks). Use `ConfigureAwait(false)` in
-  library code.
+  library code so awaited continuations don't re-enter that captured context.
 - `ILogger`-style logging via NLog — never `Console.WriteLine` outside a console
   entry point.
 - Specific exception types; no generic `catch (Exception)` swallowing.
@@ -104,7 +104,7 @@ implementation) apply. Stack specifics:
 - Naming `MethodName_StateUnderTest_ExpectedBehavior`; `[Theory]` + `[InlineData]`
   over logic-in-`[Fact]`.
 - Run tests through the Cake `Test` target (VSTest discovers net48 test
-  assemblies). `dotnet test` works for SDK-style test projects only.
+  assemblies). `dotnet test` works for **fully** SDK-style test projects (SDK format + `PackageReference`) only.
 
 Layout + examples: [`xunit-desktop-test.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-fx48-legacy/xunit-desktop-test.md)
 
@@ -124,17 +124,22 @@ Layout + examples: [`xunit-desktop-test.md`](https://github.com/freaxnx01/ai-ins
 ## Versioning (stack binding)
 
 Base rules (SemVer, Conventional Commits → bump mapping, changelog, git-cliff)
-live in `base-instructions.md`. For this stack, only the **stamping mechanism**:
+live in `base-instructions.md`. For this stack, only the **stamping mechanism** —
+goal: **one version value, every assembly in the solution identical**. **Never**
+set a version in an individual `.csproj`.
 
-- **One version for the whole solution**, defined once in a repo-root
-  `Directory.Build.props` (`<Version>` → `AssemblyVersion` / `FileVersion` /
-  `InformationalVersion`). **Never** set a version in an individual `.csproj`.
-- `Directory.Build.props` is auto-imported by `msbuild.exe` for **both**
-  SDK-style and classic projects — no per-project edits.
-- **net48 caveat:** classic projects with a hand-written `AssemblyInfo.cs` cause
-  **CS0579 duplicate attribute** errors. Fix by setting `GenerateAssemblyInfo=true`
-  and removing the version attributes from `AssemblyInfo.cs`, **or** by linking a
-  single shared version file — value defined in exactly one place.
+- **Define the version once** in a repo-root `Directory.Build.props` (`<Version>`).
+  It is auto-imported by **MSBuild 15+ (VS 2017+/`msbuild.exe`)** for every project
+  — confirm the build agent is VS Build Tools 2017 or newer.
+- **SDK-style projects** stamp `<Version>` into `AssemblyVersion` / `FileVersion` /
+  `InformationalVersion` automatically (`GenerateAssemblyInfo` default-on).
+- **Classic (non-SDK) projects ignore the MSBuild `<Version>`** — assembly-info
+  generation is SDK-only, so their version still comes from `AssemblyInfo.cs`. To
+  put them on the same value, **link one shared `SharedAssemblyInfo.cs`** into every
+  project and strip the version attributes from each project's own `AssemblyInfo.cs`
+  (set `GenerateAssemblyInfo=false` on SDK-style projects so they share it too).
+- **CS0579 "duplicate attribute"** = the version is declared twice (generated +
+  hand-written). Define each attribute in exactly one place.
 
 Scaffold + migration note: [`directory-build-props.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-fx48-legacy/directory-build-props.md)
 
@@ -163,6 +168,7 @@ In addition to the base guardrails:
   `PackageReference`, unless explicitly asked.
 - Do not add NuGet packages or change the target framework without asking first.
 - Set the version in `Directory.Build.props` only — never per-`.csproj`.
+- Detect the REST flavour from existing code (Nancy modules vs. `ApiController`) before adding endpoints — don't mix Nancy and Web API 2 in one project.
 
 ### Never generate (this stack)
 

@@ -146,6 +146,15 @@ Overlay`), then sections that **override base only where net48 diverges**:
 
 ### Versioning — centralized via root `Directory.Build.props`
 
+> **Defer to base, don't restate.** SemVer, the Conventional-Commits → bump
+> mapping, the changelog policy, and git-cliff already live in
+> `base-instructions.md` and are inherited by every stack. This section must
+> **open with a one-line deferral** to base (mirroring the modern `dotnet-core`
+> partial's *"Base rules (SemVer, Conventional Commits → bump mapping, git-cliff)
+> live in base-instructions.md. For this stack: …"*) and then state **only** the
+> net48-specific stamping mechanics below. Do **not** re-derive SemVer or
+> Conventional Commits in the overlay.
+
 - **One source of truth:** a repo-root `Directory.Build.props` defines the
   version **once** (`<Version>` → drives `AssemblyVersion`, `FileVersion`,
   `InformationalVersion`). Every project in the solution inherits the **exact**

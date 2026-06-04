@@ -49,23 +49,6 @@ Per Decision #9 ordering, expanded per the second open question above.
 - [ ] #5 — path-portability audit (deferred until next new-repo
       bootstrap).
 
-## Stack overlays
-
-- [ ] **`dotnet-fx48-legacy`: add a Web API 2 / OWIN reference scaffold.**
-      The overlay's deep scaffolding is Nancy-only (derived from a Nancy
-      service), but most net48 REST estates run ASP.NET Web API 2
-      (`System.Web.Http`) — IIS via `System.Web.Http.WebHost` or self-host
-      via `Microsoft.AspNet.WebApi.OwinSelfHost`. Add
-      `.ai/references/dotnet-fx48-legacy/webapi2-owin-host.md` (ApiController
-      + attribute routing, OWIN `Startup` + `HttpConfiguration`, self-host
-      vs IIS split, `IExceptionHandler`/`IExceptionLogger` error shaping,
-      `IDependencyResolver` DI, Newtonsoft formatter config) and promote the
-      overlay's one-line "alternative flavour" mention to a short two-flavour
-      framing. Makes the existing "detect Nancy vs `ApiController`" guardrail
-      actionable. Only worth doing if Web API 2 appears in the estate, or to
-      make the overlay reusable for the general net48 case. Keep the
-      scrub/size/drift gates. (From PR #7 follow-up.)
-
 ## Infrastructure
 
 - [ ] Forgejo: set up pull-mirrors for `ai-instructions`, `ideas-lab`,

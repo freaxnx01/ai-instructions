@@ -14,6 +14,8 @@ Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each pr
     dotnet-webapi.md            ← generated: dotnet-core + WebAPI layer
     flutter.md                  ← single-file overlay (no layer split)
     go.md                       ← single-file overlay (no layer split)
+    dotnet-fx48-legacy.md       ← single-file overlay (.NET Framework 4.8;
+                                  hand-authored — no _layers/ entry, not generated)
     _partials/
       dotnet-core.md            ← shared .NET conventions (C#, EF, Docker,
                                   logging, justfile, CI, security, basic
@@ -85,6 +87,7 @@ This repo's root `CLAUDE.md`, `.github/copilot-instructions.md`, and `SKILL.md` 
 |---|---|---|
 | `dotnet-blazor` | `.ai/stacks/dotnet-blazor.md` | .NET 10 · ASP.NET Core · Blazor + MudBlazor · EF Core · xUnit / bUnit / Playwright · Serilog + OpenTelemetry · Alpine Docker |
 | `dotnet-webapi` | `.ai/stacks/dotnet-webapi.md` | .NET 10 · ASP.NET Core REST API · Asp.Versioning.Http · ProblemDetails · OpenAPI + Scalar · JWT / API key / pass-through auth · `WebApplicationFactory` + Testcontainers · Bruno · k6 · Kiota |
+| `dotnet-fx48-legacy` | `.ai/stacks/dotnet-fx48-legacy.md` | .NET Framework 4.8 (legacy) · mixed SDK-style + classic `.csproj` · Nancy + OWIN/Katana (self-host + IIS) · NLog · Newtonsoft.Json · xUnit-desktop + Moq + Shouldly · Cake → `msbuild.exe` · GitLab CI on Windows · centralized `Directory.Build.props` |
 | `flutter` | `.ai/stacks/flutter.md` | Flutter / Dart |
 | `go` | `.ai/stacks/go.md` | Go (modules) · Cobra CLI · Bubble Tea / Bubbles / Lipgloss TUI · stdlib `net/http` ServeMux · `log/slog` · stdlib `testing` + hand-rolled fakes · `golangci-lint` · `govulncheck` · ldflags version injection |
 | `ci` | `.ai/stacks/ci.md` | Bash · GitHub Actions reusable workflows + composite actions · `actionlint` + `shellcheck` · `act` |
@@ -128,6 +131,12 @@ After editing the partial or any layer, run:
 This concatenates each `_partials/<base>.md` + `_layers/<base>-<flavour>.md` pair into the corresponding `.ai/stacks/<base>-<flavour>.md`. The CI workflow `build-stacks-drift` fails any PR that touches the source files but forgets to commit the regenerated flat files.
 
 **Never edit the generated `.ai/stacks/<base>-<flavour>.md` files directly** — changes will be overwritten on the next regen.
+
+> **Note:** `dotnet-fx48-legacy.md` is intentionally a **single-file** overlay
+> (like `flutter.md`/`go.md`) despite its `dotnet-` prefix. Do **not** create a
+> `_layers/dotnet-fx48-legacy.md` — `build-stacks.sh` would then overwrite the
+> hand-authored file. The `build-stacks-drift` check stays green because no such
+> layer exists.
 
 The build script currently handles `dotnet-*` only. Extending it to a second split family (e.g. `node-*`) is a one-line change to its glob.
 

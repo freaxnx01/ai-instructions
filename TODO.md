@@ -29,10 +29,6 @@ many entries below trace back to a specific Decision.
 - [ ] **ideas-lab**: add `.obsidian/` to `.gitignore`; create
       `WORKFLOW-ROLE.md`; open the local clone as an Obsidian vault
       per Decision #4.
-- [ ] **ai-instructions root regen**: run `/sync-ai-instructions
-      dotnet-blazor` to refresh root `CLAUDE.md` / `SKILL.md` /
-      `.github/copilot-instructions.md` with the new
-      `base-instructions.md` reference line from Decision #13.
 
 ## Skill development (freaxnx01/agent-skills marketplace)
 
@@ -72,3 +68,7 @@ Per Decision #9 ordering, expanded per the second open question above.
 - [x] Decision #14 — `PROJECT-OVERVIEW.md` pattern (2026-05-27).
 - [x] Decision #15 — `AGENT-NOTES.md` pattern for operational/agent-facing
       project context (2026-05-27).
+- [x] ai-instructions root regen — refreshed root `CLAUDE.md` /
+      `.github/copilot-instructions.md` / `SKILL.md` via
+      `/sync-ai-instructions dotnet-blazor` after the `dotnet`→`dotnet-blazor`
+      split (2026-06-04).

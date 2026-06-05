@@ -182,9 +182,16 @@ jobs:
   actionlint:
     - uses: rhysd/actionlint@<sha>
   shellcheck:
-    - run: shellcheck -x -e SC1091 scripts/**/*.sh tests/**/*.sh
+    - run: |
+        # Discover files with `find`, not a `**` glob: scripts/**/*.sh
+        # silently skips nested dirs (e.g. scripts/lib/) unless the shell has
+        # `globstar` enabled, so lib scripts go unchecked. `find` recurses.
+        mapfile -t files < <(find scripts tests -type f -name '*.sh' | sort)
+        [[ ${#files[@]} -gt 0 ]] || { echo "No shell scripts — skipping."; exit 0; }
+        shellcheck -x -e SC1091 "${files[@]}"
 ```
 
+- **Discover files with `find`, not a `**` glob.** `scripts/**/*.sh` silently skips nested dirs like `scripts/lib/` unless the shell has `globstar` (`shopt -s globstar`) enabled; `find scripts tests -type f -name '*.sh'` always recurses.
 - `-x` follows sourced files; required if you use `lib/`.
 - `SC1091` (can't follow non-constant source) is normally suppressed; everything else is opt-in per script with an inline `# shellcheck disable=SCxxxx` and a short reason comment.
 - New rule suppressions go through review — don't blanket-suppress.

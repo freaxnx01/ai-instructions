@@ -2,6 +2,14 @@
 
 Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each project loads **base + exactly one stack** so agent context stays clean — a Flutter session never sees .NET content, and vice versa.
 
+## TL;DR
+
+- **What this repo is:** a Markdown + Bash *content* repo. It produces instruction files for *other* projects — it is not itself an app. (Working on the sources? See the root [`CLAUDE.md`](CLAUDE.md).)
+- **Composition, not references:** a consuming project's `CLAUDE.md` / `copilot-instructions.md` / `SKILL.md` are assembled from `base-instructions.md` **+ exactly one** `stacks/<stack>.md` **+** shared skills, with the **full content inlined** — no `@imports` or "see other file" pointers. All indirection happens at **build/sync time**, so the output is flat and self-contained.
+- **Consume it:** run `/sync-ai-instructions <stack>` from your project (Option A), or copy a ready-made rendering from `.ai/examples/<stack>/` (Option B). Editing an overlay here changes nothing downstream until a project re-syncs.
+- **Generated vs. source:** `.ai/stacks/dotnet-blazor.md` and `dotnet-webapi.md` are **generated** — never edit them. Edit `_partials/dotnet-core.md` (shared) or `_layers/dotnet-*.md` (per-flavour), then run `./scripts/build-stacks.sh`. Single-file overlays (`flutter.md`, `go.md`, `ci.md`, `dotnet-fx48-legacy.md`) are edited directly.
+- **When `build-stacks.sh` runs:** manually, after you edit a partial/layer; and in CI (`build-stacks-drift`) on PRs touching `.ai/stacks/**` and on push to `main` — there it runs as a **drift check** (regenerate, then fail if the committed flat files differ). CI never commits regenerated files back, so the generated files in the repo are always the product of a manual run.
+
 ## Repository layout
 
 ```
@@ -30,6 +38,11 @@ Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each pr
   skills/
     commit.md           · push.md
     ui-brainstorm.md    · ui-flow.md · ui-build.md · ui-review.md
+  references/                     ← long code blocks / checklists pulled out of overlays
+  examples/
+    dotnet/justfile               ← sample artifacts referenced by overlays
+    dotnet-blazor/                ← pre-assembled dotnet-blazor rendering (Option B
+                                    template: CLAUDE.md, SKILL.md, copilot-instructions.md)
 
 scripts/
   build-stacks.sh               ← concatenates _partials/dotnet-core.md +
@@ -40,6 +53,9 @@ scripts/
 
 workflows/                      ← cross-cutting workflow docs that span repos
   personal-dev-workflow.md      ← brainstorm↔CC handoff, repo roles, content placement
+
+CLAUDE.md                       ← agent context for working in THIS repo (content + build
+                                  script) — not a stack rendering
 ```
 
 `sync-ai-instructions` and `release-notes` used to live here as `.ai/skills/*.md`; they are now standalone plugins in the `freaxnx01/agent-skills` / `freaxnx01/claude-code-plugins` marketplaces and are available globally once installed.
@@ -77,9 +93,11 @@ The skill fetches `base-instructions.md`, `stacks/dotnet.md`, and all shared ski
 
 Idempotent: safe to run for first-time setup **or** to refresh an already-initialized project. If `$ARGUMENTS` is omitted, the skill lists available stacks and asks. It refuses to fall back silently on a missing stack.
 
-### Option B — clone as template (.NET Blazor only)
+### Option B — copy the template (.NET Blazor only)
 
-This repo's root `CLAUDE.md`, `.github/copilot-instructions.md`, and `SKILL.md` are the pre-assembled rendering for a .NET Blazor project. If you want that stack, cloning the repo gives you a working starting point. Fill in the TODO markers in `CLAUDE.md` (project name, purpose) and you're done.
+`.ai/examples/dotnet-blazor/` holds the pre-assembled rendering for a .NET Blazor project — `CLAUDE.md`, `copilot-instructions.md`, and `SKILL.md`. If you want that stack, copy those files into your project root (`copilot-instructions.md` → `.github/copilot-instructions.md`), fill in the TODO markers in `CLAUDE.md` (project name, purpose), and you're done.
+
+> These are a **sample output**, not this repo's own context. The repo root `CLAUDE.md` and `.github/copilot-instructions.md` describe how to work on the instruction sources themselves. Prefer Option A (`/sync-ai-instructions`) — it always fetches the current `main` rendering, whereas these files are only as fresh as the last regeneration.
 
 ## Supported stacks
 

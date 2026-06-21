@@ -1,0 +1,19 @@
+# .NET quality-gate analyzer severities — seeded into a project root by
+# /sync-ai-instructions. Promotes the gate rules to errors so the build fails
+# when they fire. Numeric thresholds for CA1502/CA1506 live in
+# CodeMetricsConfig.txt (the single source of truth), not here.
+
+[*.cs]
+dotnet_diagnostic.CA1502.severity = error   # excessive cyclomatic complexity
+dotnet_diagnostic.CA1506.severity = error   # excessive class coupling
+dotnet_diagnostic.IDE0005.severity = error  # unnecessary using directive
+
+# Test code is held to a looser bar: high coupling and long methods are normal
+# in arrange-heavy tests, and unused usings there are low-risk.
+[**/*Tests/**.cs]
+dotnet_diagnostic.CA1506.severity = none
+dotnet_diagnostic.IDE0005.severity = suggestion
+
+[**/*Tests.cs]
+dotnet_diagnostic.CA1506.severity = none
+dotnet_diagnostic.IDE0005.severity = suggestion

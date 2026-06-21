@@ -78,7 +78,7 @@ Server-side localization (RequestLocalization, culture resolution, fallback rule
 
 The unit-test conventions and test project layout baseline live in the `dotnet-core` partial. For Blazor projects, add:
 
-```
+```text
 tests/
   <Module>.ComponentTests/    ← bUnit
   E2E/                        ← Playwright

@@ -23,6 +23,7 @@ Context: $ARGUMENTS
 6. On approval, save the diagrams to `docs/design/<feature-name>/flow.md`
 
 ## Rules
+
 - No component code in this phase
 - If the flow reveals a missing screen, surface it — do not silently skip it
 - Keep Mermaid diagrams readable: max ~15 nodes per diagram, split if needed

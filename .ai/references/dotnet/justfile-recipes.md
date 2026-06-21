@@ -37,17 +37,20 @@ CI (GitHub Actions): `extractions/setup-just@v2`.
 - **PowerShell output for piping**: use `Write-Output` (not `Write-Host`) when the value may be consumed by `$(just <recipe>)` — `Write-Host` writes to the host stream and is invisible to capture.
 
 ## Build & run
+
 - `build` — build the solution in Release mode
 - `watch` — run the API with hot reload (`dotnet watch`)
 - `run-edge` — start the frontend and open it in the developer's preferred browser
   *Body is host-specific. Ship `[unix]` + `[windows]` variants with the canonical recipe name; bodies use per-OS launchers (Windows: `pwsh` + `Start-Process msedge`; macOS: `open -a Safari`; Linux: `xdg-open`).*
 
 ## Testing
+
 - `test` — run every test project in the solution
 - `test-unit` — run unit test projects only (iterate a `test_unit_projects` list)
 - `test-coverage` — run tests with `--collect:"XPlat Code Coverage" --results-directory ./coverage`
 
 ## Docker (Compose)
+
 - `docker-run` — `compose up --build` in the foreground
 - `up` — `compose up -d --build`
 - `down` — `compose down`
@@ -55,17 +58,20 @@ CI (GitHub Actions): `extractions/setup-just@v2`.
 - `rebuild` — `down` + `up`
 
 ## Quality
+
 - `lint` — `dotnet format --verify-no-changes`
 - `outdated` — `dotnet list package --outdated`
 - `vuln` — `dotnet list package --vulnerable --include-transitive`
 
 ## Versioning (single source of truth: `Directory.Build.props` → `<Version>`)
+
 - `version` — print current version
 - `version-set 1.2.3` — set version explicitly (positional arg, no `V=` prefix)
 - `bump-major` / `bump-minor` / `bump-patch` — SemVer bumps. Unix recipes use `sed`; Windows recipes use the PowerShell `[xml]` parser
 - `bump-auto` — derive next version from Conventional Commits via `git-cliff --bumped-version`; refuse major bumps (require explicit `bump-major`)
 
 ## Release
+
 - `changelog` — `git-cliff --output CHANGELOG.md`
 - `release-notes` — generate user-friendly release notes for the current version
   *Body is tool-specific. Standardize the recipe name; leave the body to each project (Claude Code, Copilot CLI, llm CLI, OpenAI, hand-rolled).*
@@ -76,4 +82,5 @@ CI (GitHub Actions): `extractions/setup-just@v2`.
   *Body is project-specific (artifact format, drop location, signing). Standardize the recipe name; leave the body to each project.*
 
 ## Cleanup
+
 - `clean` — remove `bin/`, `obj/`, `publish/` trees and `./coverage/`. Unix uses `find -exec`; Windows uses `Get-ChildItem -Recurse | Remove-Item`.

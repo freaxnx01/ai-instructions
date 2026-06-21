@@ -29,6 +29,7 @@ Context: $ARGUMENTS
    - Verify icon set consistency (one family, one weight)
 
 ## Rules
+
 - One step at a time — never skip ahead
 - Keep view/markup files free of business logic — only binding and UI events
 - Reuse from the project's shared/common folder — check before creating anything new

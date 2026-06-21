@@ -2,7 +2,7 @@
 
 Scripts live in `perf/`, committed to Git. One scenario per critical user journey or hot endpoint.
 
-```
+```text
 perf/
 ├── scenarios/
 │   ├── create-order.smoke.js
@@ -16,6 +16,7 @@ perf/
 ## Naming + profiles
 
 `<endpoint-or-journey>.<profile>.js` where `<profile>` is one of:
+
 - `smoke` — 1 VU, ~30 s
 - `load` — steady state at target rps
 - `stress` — ramp past expected peak

@@ -18,6 +18,7 @@ Context: $ARGUMENTS
 8. Read back the file to verify, report what was added
 
 ## Rules
+
 - Never modify or regenerate existing entries
 - No commit hashes, PR numbers, or module prefixes in output
 - If no missing versions, say so and stop

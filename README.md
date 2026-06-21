@@ -12,7 +12,7 @@ Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each pr
 
 ## Repository layout
 
-```
+```text
 .ai/
   base-instructions.md          ← stack-agnostic conventions (SemVer, Conventional
                                   Commits, TDD, Clean Code, 12-Factor, branching,
@@ -54,9 +54,19 @@ scripts/
 workflows/                      ← cross-cutting workflow docs that span repos
   personal-dev-workflow.md      ← brainstorm↔CC handoff, repo roles, content placement
 
+templates/                      ← seed config copied into a project by /sync-ai-instructions
+  pre-commit/                   ← polyglot lint gate: .pre-commit-config.yaml, .yamllint,
+                                  .markdownlint-cli2.yaml (see references/base/polyglot-lint.md)
+
 CLAUDE.md                       ← agent context for working in THIS repo (content + build
                                   script) — not a stack rendering
 ```
+
+The **polyglot lint standard** (a single `pre-commit` gate covering YAML, shell,
+Markdown, JSON, Dockerfiles and Python) is documented in
+[`.ai/references/base/polyglot-lint.md`](.ai/references/base/polyglot-lint.md);
+its canonical config lives under `templates/pre-commit/` and is seeded into a
+project by `/sync-ai-instructions`.
 
 `sync-ai-instructions` and `release-notes` used to live here as `.ai/skills/*.md`; they are now standalone plugins in the `freaxnx01/agent-skills` / `freaxnx01/claude-code-plugins` marketplaces and are available globally once installed.
 
@@ -77,7 +87,7 @@ The single overlay `dotnet.md` has been renamed to `dotnet-blazor.md`, with its 
 
 Install once:
 
-```
+```text
 /plugin marketplace add freaxnx01/agent-skills
 /plugin install sync-ai-instructions@freax-agent-skills
 /reload-plugins
@@ -85,7 +95,7 @@ Install once:
 
 Then from inside your target project (not this repo):
 
-```
+```text
 /sync-ai-instructions dotnet
 ```
 
@@ -133,7 +143,7 @@ Keep anything stack-agnostic (SemVer, Conventional Commits, TDD principles, Clea
 
 When a stack has multiple flavours that share substantial content (currently: the .NET family), split the source:
 
-```
+```text
 .ai/stacks/
   _partials/<base>.md           ← shared content
   _layers/<base>-<flavour>.md   ← per-flavour delta
@@ -196,6 +206,7 @@ A project that adopts the personal dev workflow ends up with a small, predictabl
 | **`TODO.md`** | Repo root | Cross-cutting follow-up work that spans sessions or repos. In-repo work goes to GitHub Issues; `TODO.md` is for items that don't fit there. | Items get checked off as done; new ones land in the right section. |
 
 Quick mental model:
+
 - **CLAUDE.md / SKILL.md / copilot-instructions.md** = HOW to code (regenerated, never edit directly).
 - **WORKFLOW-ROLE.md** = WHERE this repo fits in the workflow.
 - **PROJECT-OVERVIEW.md** = WHAT the product is and WHY it exists.

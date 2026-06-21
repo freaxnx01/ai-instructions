@@ -171,7 +171,7 @@ kiota generate -l CSharp -d https://api.example.com/openapi/v1.0.json -o ./clien
 
 Unit-test conventions and the baseline `<Module>.UnitTests` / `<Module>.IntegrationTests` layout live in the `dotnet-core` partial. For WebAPI, the integration project uses `WebApplicationFactory` + Testcontainers, plus one optional contract project:
 
-```
+```text
 tests/
   Api.ContractTests/          ← optional — pinned OpenAPI snapshot
 ```

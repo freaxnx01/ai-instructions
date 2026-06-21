@@ -2,7 +2,7 @@
 
 Collections live in `bruno/`, committed to Git. One folder per module, mirroring API routes.
 
-```
+```text
 bruno/
 ├── bruno.json
 ├── environments/

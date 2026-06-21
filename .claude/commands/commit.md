@@ -19,6 +19,7 @@ Context: $ARGUMENTS
 9. Show the commit hash and message
 
 ## Rules
+
 - If there are no changes, say so and stop
 - If a pre-commit hook fails, fix the issue and create a NEW commit (do not amend)
 - Never push — use `/push` for that

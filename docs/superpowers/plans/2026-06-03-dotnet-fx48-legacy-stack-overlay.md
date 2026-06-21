@@ -35,6 +35,7 @@ scrub() {
 ## File structure
 
 **Create:**
+
 - `.ai/stacks/dotnet-fx48-legacy.md` — the overlay (≤ ~24 KB)
 - `.ai/references/dotnet-fx48-legacy/tech-stack.md`
 - `.ai/references/dotnet-fx48-legacy/directory-build-props.md`
@@ -45,6 +46,7 @@ scrub() {
 - `.ai/references/dotnet-fx48-legacy/nlog-config.md`
 
 **Modify:**
+
 - `README.md` — *Supported stacks* table row + layout comment block + single-file/no-`_layers` note
 
 **Author references first, then the overlay** (the overlay links to them), then README, then final verification.
@@ -56,6 +58,7 @@ The reference scaffolds below are written **complete and sanitized** — copy th
 ### Task 1: `tech-stack.md` reference
 
 **Files:**
+
 - Create: `.ai/references/dotnet-fx48-legacy/tech-stack.md`
 
 - [ ] **Step 1: Write the file**
@@ -98,6 +101,7 @@ git commit -m "docs(dotnet-fx48-legacy): add tech-stack reference"
 ### Task 2: `directory-build-props.md` reference (centralized versioning)
 
 **Files:**
+
 - Create: `.ai/references/dotnet-fx48-legacy/directory-build-props.md`
 
 - [ ] **Step 1: Write the file**
@@ -131,7 +135,7 @@ classic `.csproj` — so there are no per-project edits and no manual `<Import>`
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
 </Project>
-```
+```text
 
 ## net48 caveat — classic projects with a hand-written `AssemblyInfo.cs`
 
@@ -178,6 +182,7 @@ git commit -m "docs(dotnet-fx48-legacy): add centralized Directory.Build.props r
 ### Task 3: `nancy-owin-host.md` reference
 
 **Files:**
+
 - Create: `.ai/references/dotnet-fx48-legacy/nancy-owin-host.md`
 
 - [ ] **Step 1: Write the file**
@@ -221,7 +226,7 @@ namespace Acme.Service.Rest.Modules
         }
     }
 }
-```
+```text
 
 ## Bootstrapper — TinyIoC registration + JSON via Newtonsoft
 
@@ -255,7 +260,7 @@ namespace Acme.Service.Rest
         }
     }
 }
-```
+```text
 
 ## OWIN Startup (shared by self-host and IIS)
 
@@ -273,7 +278,7 @@ namespace Acme.Service.Rest
         }
     }
 }
-```
+```text
 
 ## Self-host (Console / Windows Service)
 
@@ -286,7 +291,7 @@ using (WebApp.Start<Startup>("http://localhost:8080"))
     Console.WriteLine("Listening on http://localhost:8080 — press Enter to stop.");
     Console.ReadLine();
 }
-```
+```text
 
 For a Windows Service, wrap `WebApp.Start<Startup>(url)` in `ServiceBase.OnStart`
 and dispose the returned handle in `OnStop`.
@@ -316,6 +321,7 @@ git commit -m "docs(dotnet-fx48-legacy): add Nancy + OWIN host reference"
 ### Task 4: `xunit-desktop-test.md` reference
 
 **Files:**
+
 - Create: `.ai/references/dotnet-fx48-legacy/xunit-desktop-test.md`
 
 - [ ] **Step 1: Write the file**
@@ -333,7 +339,7 @@ reference `xunit` + `xunit.runner.visualstudio`; classic projects pin them via
 tests/
   <Module>.Tests/            ← xUnit desktop; Moq + Shouldly
   TestHelpers/               ← shared fakes, fixtures, builders (referenced by tests)
-```
+```text
 
 ## SDK-style test csproj (recommended for new test projects)
 
@@ -354,7 +360,7 @@ tests/
     <ProjectReference Include="..\TestHelpers\TestHelpers.csproj" />
   </ItemGroup>
 </Project>
-```
+```text
 
 ## Example test (xUnit + Moq + Shouldly)
 
@@ -389,7 +395,7 @@ public class WidgetServiceTests
         Should.Throw<ArgumentException>(() => sut.Find(id));
     }
 }
-```
+```text
 
 ## Nancy endpoint test (Nancy.Testing)
 
@@ -410,7 +416,7 @@ public class WidgetsModuleTests
         response.StatusCode.ShouldBe(Nancy.HttpStatusCode.NotFound);
     }
 }
-```
+```text
 
 Run all tests via the Cake `Test` target (see `cake-build.md`); locally,
 `dotnet test` works **only** for SDK-style test projects — classic
@@ -434,6 +440,7 @@ git commit -m "docs(dotnet-fx48-legacy): add xUnit desktop test reference"
 ### Task 5: `cake-build.md` reference
 
 **Files:**
+
 - Create: `.ai/references/dotnet-fx48-legacy/cake-build.md`
 
 - [ ] **Step 1: Write the file**
@@ -454,7 +461,7 @@ param(
 $ErrorActionPreference = "Stop"
 dotnet tool restore                       # installs Cake.Tool from .config/dotnet-tools.json
 dotnet cake build/build.cake --target=$Target --configuration=$Configuration
-```
+```text
 
 ## `.config/dotnet-tools.json`
 
@@ -466,7 +473,7 @@ dotnet cake build/build.cake --target=$Target --configuration=$Configuration
     "cake.tool": { "version": "4.0.0", "commands": ["dotnet-cake"] }
   }
 }
-```
+```text
 
 ## `build/build.cake`
 
@@ -503,7 +510,7 @@ Task("Package")
 Task("Default").IsDependentOn("Test");
 
 RunTarget(target);
-```
+```text
 
 `MSBuild`/`VSTest` resolve Visual Studio Build Tools on the agent. The packaging
 step uses Cake's `Zip` (or 7-Zip via `Context.Tools.Resolve("7za.exe")` if a
@@ -527,6 +534,7 @@ git commit -m "docs(dotnet-fx48-legacy): add Cake build reference"
 ### Task 6: `gitlab-ci.md` reference
 
 **Files:**
+
 - Create: `.ai/references/dotnet-fx48-legacy/gitlab-ci.md`
 
 - [ ] **Step 1: Write the file**
@@ -559,7 +567,7 @@ build:
   only:
     - main
     - merge_requests
-```
+```text
 
 Keep the build logic in Cake, not in CI YAML — the same `build.ps1 -Target …`
 runs identically on a developer machine and on the runner.
@@ -582,6 +590,7 @@ git commit -m "docs(dotnet-fx48-legacy): add GitLab CI reference"
 ### Task 7: `nlog-config.md` reference
 
 **Files:**
+
 - Create: `.ai/references/dotnet-fx48-legacy/nlog-config.md`
 
 - [ ] **Step 1: Write the file**
@@ -611,13 +620,13 @@ PreserveNewest**. Use `ILogger`-style usage via `LogManager.GetCurrentClassLogge
     <logger name="*" minlevel="Info" writeTo="console,file" />
   </rules>
 </nlog>
-```
+```text
 
 ```csharp
 private static readonly NLog.Logger Log = NLog.LogManager.GetCurrentClassLogger();
 // ...
 Log.Info("Started widget {WidgetId}", id);
-```
+```text
 
 Configure structured properties (`${event-properties}`) and an OTLP/JSON target
 if the service ships logs to a collector. Never log secrets or full request bodies.
@@ -640,6 +649,7 @@ git commit -m "docs(dotnet-fx48-legacy): add NLog.config reference"
 ### Task 8: The overlay `.ai/stacks/dotnet-fx48-legacy.md`
 
 **Files:**
+
 - Create: `.ai/stacks/dotnet-fx48-legacy.md`
 
 Write the overlay below **verbatim** (it is already sanitized and links to the
@@ -855,6 +865,7 @@ git commit -m "feat(stacks): add dotnet-fx48-legacy overlay (.NET Framework 4.8)
 ### Task 9: Update `README.md`
 
 **Files:**
+
 - Modify: `README.md` — *Supported stacks* table, repository-layout comment block, single-file note
 
 - [ ] **Step 1: Add the row to the *Supported stacks* table**
@@ -869,7 +880,7 @@ Find the table row for `dotnet-webapi` and add **after** it:
 
 In the `.ai/` layout block, find the `go.md` line and add **after** it:
 
-```
+```text
     go.md                       ← single-file overlay (no layer split)
     dotnet-fx48-legacy.md       ← single-file overlay (.NET Framework 4.8;
                                   hand-authored — no _layers/ entry, not generated)

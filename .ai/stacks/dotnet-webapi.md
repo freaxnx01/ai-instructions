@@ -97,7 +97,7 @@ The base testing rules (TDD, no test modification to make green, full suite afte
 
 ### Test project layout (baseline)
 
-```
+```text
 tests/
   <Module>.UnitTests/         ← xUnit, no I/O
   <Module>.IntegrationTests/  ← xUnit, real I/O via Testcontainers
@@ -180,6 +180,7 @@ Dockerfile scaffold: [`.ai/references/dotnet/dockerfile.md`](https://github.com/
 - Health checks: `/health/live` (liveness) and `/health/ready` (readiness, checks DB)
 
 **12-Factor enforcement points for this stack:**
+
 - Never write to the local filesystem inside a container for application state
 - Never use `appsettings.Development.json` for secrets — always env vars
 - EF Core migrations must be applied as a separate init container or pre-deploy step — **never** auto-migrated on `app.Run()`
@@ -417,7 +418,7 @@ kiota generate -l CSharp -d https://api.example.com/openapi/v1.0.json -o ./clien
 
 Unit-test conventions and the baseline `<Module>.UnitTests` / `<Module>.IntegrationTests` layout live in the `dotnet-core` partial. For WebAPI, the integration project uses `WebApplicationFactory` + Testcontainers, plus one optional contract project:
 
-```
+```text
 tests/
   Api.ContractTests/          ← optional — pinned OpenAPI snapshot
 ```

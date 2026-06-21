@@ -2,7 +2,7 @@
 
 Repo-root layout for project documentation.
 
-```
+```text
 docs/
 ├── design/                    ← UI wireframes & Mermaid flows per feature
 │   └── <feature-name>/

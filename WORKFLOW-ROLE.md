@@ -10,6 +10,7 @@ doc is hosted here, so changes here are often the *source* of workflow
 changes, not just downstream consequences of them.
 
 **Design source:**
+
 - Workflow doc (this repo): `workflows/personal-dev-workflow.md`
 - Per-stack overlays: `.ai/stacks/` (source of truth for downstream consumer
   projects)
@@ -20,6 +21,7 @@ propagate to every consumer that runs `/sync-ai-instructions`.
 
 Routing thoughts in this repo follows the implementer-repo addendum
 (see `workflows/personal-dev-workflow.md`, Routing Daily Thoughts section):
+
 - Changes to how AI instructions are structured here → this repo
 - Changes to the workflow doc itself → this repo (it lives here)
 - Skill ideas / brainstorms-before-implementation → `ideas-lab`

@@ -2,7 +2,7 @@
 
 ## Modular Monolith — top-level layout
 
-```
+```text
 src/
   Modules/
     Orders/
@@ -23,7 +23,7 @@ Modules communicate via in-process interfaces — never direct project reference
 
 Apply when a module has multiple infrastructure adapters (e.g. REST + messaging) or needs strong testability isolation.
 
-```
+```text
 <Module>/
   Domain/           ← pure domain logic, no dependencies
   Application/

@@ -9,6 +9,7 @@ How do cross-cutting concerns that span multiple repos get handled?
 How does each repo relate to the workflow itself (consumer vs. implementer)?
 
 Core Principles
+
 1. Docs live near the work they describe
 Validated empirically: CAS notes were originally in a separate vault, later
 migrated into the CAS repo because that felt more natural — the notes and the
@@ -88,6 +89,7 @@ workflow conventions like any consumer, and additionally treats the workflow
 doc as design input.
 
 **Design source:**
+
 - Workflow doc: `ai-instructions` repo, file
   `workflows/personal-dev-workflow.md`
   (<https://github.com/freaxnx01/ai-instructions/blob/main/workflows/personal-dev-workflow.md>)
@@ -163,13 +165,11 @@ Workflow / conventions / publishable → ai-instructions/workflows/ or
 ai-instructions/designs/
 Scoped to existing project → that project's docs/ or designs/ folder
 
-
 cd into the repo, start CC CLI session. First prompt points CC at the
 seed file:
 
 "Read <path> — it's a seed from a Claude App brainstorm. Help me
 develop it. Start by asking what's underspecified."
-
 
 CC takes over with full repo context, file-writing ability, Git
 tracking. The seed file is the handoff mechanism.
@@ -203,7 +203,7 @@ avoids a central inbox that has to be drained.
 
 Decision tree
 
-```
+```text
 Is this about an existing, concrete project?
 ├─ YES → that project's repo
 │   ├─ Tracking-level thing (todo, bug, chore) → GitHub Issue
@@ -224,6 +224,7 @@ Is this about an existing, concrete project?
 Bucket-by-bucket guidance
 
 Todos (manual testing, chores)
+
 - One-off chores → GitHub Issue with `chore` label, on the relevant repo.
 - Recurring checklists (release prep, deployment steps, manual test
   passes) → `docs/checklists/<name>.md` in the project repo. Issues
@@ -232,18 +233,21 @@ Todos (manual testing, chores)
   files tend to rot.
 
 Ideas (no project yet)
+
 - `ideas-lab/ideas/<rough-name>.md`. Low-friction: a few bullets is
   enough at capture time.
 - Frontmatter optional but useful as the idea matures: `status: idea
   | exploring | graduated | abandoned`, `created: YYYY-MM-DD`.
 
 Spec / impl plan (existing project)
+
 - Spec and impl plan are usually the same artifact at different
   fidelities — don't create two files.
 - Lives at `<project>/designs/<feature>.md` or `<project>/docs/specs/<feature>.md`.
   Pick one convention per project.
 
 Issue with impl plan
+
 - For short plans (< ~30 lines): paste the plan into the Issue body.
   Issue becomes the canonical spec; PR closes the Issue. Clean and
   minimal.
@@ -252,21 +256,25 @@ Issue with impl plan
   duplication; design doc survives in Git diff history.
 
 PR
+
 - Body references the Issue (`Closes #N`) and the design doc if any.
 - PR body is for change description and reviewer context, not for the
   plan content itself.
 
 Workflow idea → existing project
+
 - Cross-project convention → `ai-instructions/workflows/` or `designs/`.
 - Single-project change → that project's `docs/` or `docs/adr/`.
 - Speculative, not yet committed → `ideas-lab/ideas/`.
 
 Workflow idea → new project
+
 - `ideas-lab/ideas/<name>.md`. Matures → graduation path (real repo
   created, idea moved to `archived/` with pointer).
 
 Capture-timing rule
 Different from the "where" — about when to capture:
+
 - Rough keyword, two-line thought → capture immediately, at lowest
   fidelity it deserves. The dangerous middle is "I'll write it down
   later." You won't.
@@ -292,6 +300,7 @@ Test when in doubt: "would this affect another implementer repo too?" —
 if yes, it's a workflow change. If no, it's a repo change.
 
 Examples (in `bridge`):
+
 - "Agent launcher misses runs >24h old" → bridge Issue (bridge behavior)
 - "I want a `brg status` subcommand" → bridge Issue (bridge feature)
 - "Workflow doc should say X about agent launchers" → ai-instructions
@@ -320,7 +329,9 @@ If the paths get tedious, define a $REPOS_GH env var pointing to
 bashexport REPOS_GH="$HOME/projects/repos/github/freaxnx01"
 alias aii="cd $REPOS_GH/public/ai-instructions"
 alias brg="cd $REPOS_GH/private/bridge"
-# etc.
+
+# etc
+
 Naming rule for the aliases themselves:
 
 Single-word repo → strip vowels, keep 3 consonants (bridge → brg)
@@ -349,10 +360,12 @@ Decisions
    Private companions live in a gitignored top-level `local/` folder that
    mirrors the public structure:
 
-       ai-instructions/
-         workflows/personal-dev-workflow.md       ← public, sanitized
-         local/
-           workflows/personal-dev-workflow.md     ← private, concrete values
+   ```text
+   ai-instructions/
+     workflows/personal-dev-workflow.md       ← public, sanitized
+     local/
+       workflows/personal-dev-workflow.md     ← private, concrete values
+   ```
 
    Adjacency makes "sanitize and publish" natural: diff `local/X` against `X`,
    scrub the differences, commit only the public version. The homelab vault
@@ -714,6 +727,7 @@ standalone plugins in the `freaxnx01/agent-skills` marketplace
 (see Decision #9), not inside this repo.
 
 What makes a workflow step a good skill candidate
+
 - Recurring — you do it more than monthly.
 - Stable shape — the steps are similar each time; what varies is the
   content, not the procedure.
@@ -727,6 +741,7 @@ What makes a workflow step a good skill candidate
 Candidate workflow steps
 
 Strong candidates:
+
 1. "Go through `ideas-lab` ideas" — periodic review pass. Triage each
    idea: still relevant? promote to design? archive? Skill encodes the
    review questions, frontmatter conventions, archival pattern.
@@ -748,6 +763,7 @@ Strong candidates:
    Conventions section above) and the audit-then-apply pattern.
 
 Weaker candidates (one-off enough that a doc is fine, no skill needed):
+
 - Repo renames (rare, prompt-driven is fine)
 - Creating a new implementer repo (uses existing seed pattern, well-
   covered by README templates)
@@ -761,7 +777,7 @@ after the first two ship.
 Open Questions for CC CLI Session
 
 (All 15 questions resolved — 10 on 2026-05-25, #11+#12 on 2026-05-26,
-#13+#14+#15 on 2026-05-27. New questions land here as they come up.)
+and #13+#14+#15 landed on 2026-05-27. New questions land here as they come up.)
 
 Next Steps
 

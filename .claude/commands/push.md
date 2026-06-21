@@ -14,5 +14,6 @@ Context: $ARGUMENTS
 8. Show the result
 
 ## Rules
+
 - If push fails due to auth, suggest `gh auth login`
 - If push fails due to diverged history, suggest `git pull --rebase` rather than force-push

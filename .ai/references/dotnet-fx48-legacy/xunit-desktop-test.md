@@ -6,7 +6,7 @@ reference `xunit` + `xunit.runner.visualstudio`; classic projects pin them via
 
 ## Project layout
 
-```
+```text
 tests/
   <Module>.Tests/            ← xUnit desktop; Moq + Shouldly
   TestHelpers/               ← shared fakes, fixtures, builders (referenced by tests)

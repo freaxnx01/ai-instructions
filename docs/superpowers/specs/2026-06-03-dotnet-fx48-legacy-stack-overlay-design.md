@@ -128,7 +128,7 @@ Overlay`), then sections that **override base only where net48 diverges**:
    legacy REST flavour. Links → `nancy-owin-host.md`.
 6. **Logging / JSON / Config** — **NLog** (override base's Serilog),
    **Newtonsoft.Json** (override System.Text.Json), `app.config` / `web.config`
-   + `System.Configuration` (override appsettings.json). Links → `nlog-config.md`.
+   - `System.Configuration` (override appsettings.json). Links → `nlog-config.md`.
 7. **Testing** — xUnit **desktop runner** + Moq + Shouldly + Nancy.Testing
    layout. Links → `xunit-desktop-test.md`.
 8. **Build & CI** — Cake (`build.ps1` → `build.cake`) → `msbuild.exe`, 7-Zip
@@ -189,7 +189,7 @@ prose + fenced code), all sanitized with placeholder names:
   duplicate-attribute caveat; migration note from a manually-imported shared
   props file.
 - `nancy-owin-host.md` — Nancy module + bootstrapper (TinyIoC) + OWIN `Startup`
-  + self-host (Console / Windows Service) + IIS host.
+  - self-host (Console / Windows Service) + IIS host.
 - `xunit-desktop-test.md` — test project layout + example (xUnit desktop + Moq +
   Shouldly + Nancy.Testing).
 - `cake-build.md` — `build.cake` skeleton + `build.ps1` bootstrap driving

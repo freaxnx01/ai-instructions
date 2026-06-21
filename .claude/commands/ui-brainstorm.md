@@ -22,6 +22,7 @@ Context: $ARGUMENTS
 6. On approval, save the wireframe to `docs/design/<feature-name>/wireframe.md`
 
 ## Rules
+
 - No Mermaid diagrams in this phase
 - No code in this phase
 - One wireframe iteration at a time

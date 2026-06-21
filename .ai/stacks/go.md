@@ -16,10 +16,10 @@ deliverable is a Go binary.
 
 | Layer | Technology |
 |---|---|
-| Language / toolchain | Go (latest stable), pinned in `go.mod` (`go 1.x`); Go modules only — no `GOPATH`, no vendoring unless a consumer requires it |
+| Language / toolchain | Go (latest stable), pinned in `go.mod` (`go 1.x`); Go modules only — no `GOPATH` or vendoring unless required |
 | CLI framework | [`spf13/cobra`](https://github.com/spf13/cobra) — command tree, flags, shell completion |
 | TUI | [Charm](https://github.com/charmbracelet) stack: `bubbletea` (Model-Update-View), `bubbles` (widgets), `lipgloss` (styling) |
-| HTTP services | Standard library `net/http` with the Go 1.22+ enhanced `ServeMux` (method + path patterns); a router (`chi`) only when middleware/sub-routers justify it |
+| HTTP services | Standard library `net/http` with the Go 1.22+ `ServeMux` (method + path patterns); a router (`chi`) only when middleware warrants it |
 | Logging | `log/slog` (structured) for diagnostics; `fmt.Fprintln(os.Stderr, …)` for user-facing CLI notices |
 | Configuration | Env vars (12-factor) + Cobra flags, folded into one config struct |
 | Testing | Standard library `testing`: table-driven tests, `t.Run` subtests, hand-rolled fakes. **No** `testify`, `mockery`, or `gomock` |
@@ -32,7 +32,7 @@ deliverable is a Go binary.
 
 ## Project Structure
 
-```
+```text
 cmd/
   <binary>/              ← one dir per binary; main package + Cobra root wiring only
     main.go
@@ -316,7 +316,7 @@ Base rules (SemVer, Conventional Commits → bump mapping, `git-cliff`, tag on
   There is no hand-edited version constant.
 - The version is injected at build time via linker flags into `main`:
 
-  ```
+  ```text
   go build -ldflags "\
     -X main.version=$(git describe --tags --always --dirty) \
     -X main.commit=$(git rev-parse --short HEAD) \

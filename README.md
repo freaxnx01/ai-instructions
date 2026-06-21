@@ -57,6 +57,9 @@ workflows/                      ← cross-cutting workflow docs that span repos
 templates/                      ← seed config copied into a project by /sync-ai-instructions
   pre-commit/                   ← polyglot lint gate: .pre-commit-config.yaml, .yamllint,
                                   .markdownlint-cli2.yaml (see references/base/polyglot-lint.md)
+  dotnet/                       ← .NET quality gates: Directory.Build.props, .editorconfig,
+                                  CodeMetricsConfig.txt, stryker-config.json, quality.yml
+                                  (see references/dotnet/quality-gates.md)
 
 CLAUDE.md                       ← agent context for working in THIS repo (content + build
                                   script) — not a stack rendering
@@ -67,6 +70,13 @@ Markdown, JSON, Dockerfiles and Python) is documented in
 [`.ai/references/base/polyglot-lint.md`](.ai/references/base/polyglot-lint.md);
 its canonical config lives under `templates/pre-commit/` and is seeded into a
 project by `/sync-ai-instructions`.
+
+The **.NET quality-gate standard** (complexity, class coupling, method length
+and mutation score, plus the warnings-as-errors policy and the "gates must be
+demonstrated failing" rule) is documented in
+[`.ai/references/dotnet/quality-gates.md`](.ai/references/dotnet/quality-gates.md).
+The threshold values are the single source of truth in `templates/dotnet/`; the
+gates run via the central `dotnet-quality` composite action in `agent-pipeline`.
 
 `sync-ai-instructions` and `release-notes` used to live here as `.ai/skills/*.md`; they are now standalone plugins in the `freaxnx01/agent-skills` / `freaxnx01/claude-code-plugins` marketplaces and are available globally once installed.
 

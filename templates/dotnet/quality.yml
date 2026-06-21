@@ -1,0 +1,40 @@
+name: quality
+
+# .NET quality gate — seeded into a project's .github/workflows/ by
+# /sync-ai-instructions. Calls the central dotnet-quality composite action.
+# Fill in `solution` and `test-project`; max-added-cs-lines (800) and
+# max-method-lines (40) are the single source of truth for those two thresholds.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0          # diff-scope guard needs history
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2  # v5.3.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Quality gate
+        uses: freaxnx01/agent-pipeline/.github/actions/dotnet-quality@ce1ac92decc68539d74d5a5d7702da324aef8791  # agent-pipeline main (PR #88)
+        with:
+          solution: YourSolution.sln              # TODO: set to your .sln/.csproj
+          test-project: tests/YourTests.csproj    # TODO: set to your test project
+          max-added-cs-lines: "800"
+          max-method-lines: "40"

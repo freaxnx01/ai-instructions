@@ -1,0 +1,6 @@
+# Code Metrics thresholds — the single source of truth for CA1502 / CA1506.
+# Format: <RuleId>: <threshold>
+# Registered as an AdditionalFile by Directory.Build.props; without that the
+# custom thresholds are silently ignored.
+CA1502: 10
+CA1506: 20

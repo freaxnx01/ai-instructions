@@ -158,7 +158,7 @@ main              ← always deployable, protected
 - Delete branch after merge
 - Rebase or squash merge — no merge commits on `main`
 
-**Trivial, non-code changes** (tooling/build-script-only edits such as a `justfile`/`Makefile` recipe, a comment, or a docs typo — nothing that changes application behavior) may skip PR review at the maintainer's discretion and be pushed directly to `main`. CI must still pass. This is a narrow exception, not a general escape hatch — anything touching application/library source, config that affects runtime behavior, or CI/deploy pipelines still requires a PR. When in doubt, open a PR.
+Exception: trivial non-code edits (build-script tweaks, comments, docs typos) may skip review and push directly; CI must still pass. Source/runtime-config/CI changes still need a PR.
 
 ---
 

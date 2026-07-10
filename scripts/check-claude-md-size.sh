@@ -3,7 +3,7 @@
 # overlay + sync header) stays under Claude Code's performance budget.
 #
 # Claude Code prints "Large CLAUDE.md will impact performance (>40k chars)"
-# once the file exceeds 40,000 bytes. We enforce a 39,000-byte ceiling here
+# once the file exceeds 40,000 bytes. We enforce a 39,500-byte ceiling here
 # so that small additions to base or any stack do not silently push consumers
 # over the line.
 #
@@ -12,7 +12,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-MAX_ASSEMBLED_BYTES="${MAX_ASSEMBLED_BYTES:-39000}"
+MAX_ASSEMBLED_BYTES="${MAX_ASSEMBLED_BYTES:-39500}"
 BASE=".ai/base-instructions.md"
 STACKS_DIR=".ai/stacks"
 

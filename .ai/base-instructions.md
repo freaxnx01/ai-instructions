@@ -158,6 +158,8 @@ main              ← always deployable, protected
 - Delete branch after merge
 - Rebase or squash merge — no merge commits on `main`
 
+Exception: trivial non-code edits (build-script tweaks, comments, docs typos) may skip review and push directly; CI must still pass. Source/runtime-config/CI changes still need a PR.
+
 ---
 
 ## Git Worktrees

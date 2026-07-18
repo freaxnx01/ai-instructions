@@ -63,8 +63,8 @@ base (~14 KB) + overlay stays under the **39 KB** assembled-`CLAUDE.md` budget
    Web Audio / `<audio>`; manual WebRTC for P2P; GitHub Pages hosting; git-cliff
    for changelog; `npx`-only optional lint/format.
 3. **Project Structure** — document the realistic spread rather than forcing one
-   layout: minimal (`index.html` only) → richer (`source/` + built `index.html`
-   + `vendor/` + `README.md` + `LICENSE` + `version.js` + `CHANGELOG.md` +
+   layout: minimal (`index.html` only) up to richer layouts (`source/`, a built
+   `index.html`, `vendor/`, `README.md`, `LICENSE`, `version.js`, `CHANGELOG.md`,
    `cliff.toml`). Note that a few games are bundled (a `source/` build emits
    `index.html`) and where `version.js` lives in that case (in source, flowing
    into the bundle).

@@ -25,9 +25,11 @@
 ## Task 1: Write the `browser-game` overlay
 
 **Files:**
+
 - Create: `ai-instructions/.ai/stacks/browser-game.md`
 
 **Interfaces:**
+
 - Produces: the overlay consumed by `/sync-ai-instructions browser-game` and by Task 2 (README row) and Tasks 3–5 (pilot follows its conventions).
 
 Author the overlay following `.ai/stacks/go.md`'s shape. Each section below lists the **required coverage**; write concise prose (this is a house-style doc, not a tutorial). Concrete artifacts that MUST appear verbatim are given in full.
@@ -203,9 +205,11 @@ canvas game-loop, manual-WebRTC P2P, i18n, and hub-integration rules."
 ## Task 2: Wire `browser-game` into the README
 
 **Files:**
+
 - Modify: `ai-instructions/README.md` (Supported stacks table ~line 124-131; single-file-overlay mention ~line 10 and ~line 85)
 
 **Interfaces:**
+
 - Consumes: the overlay file from Task 1.
 - Produces: discoverable stack listing; no code interface.
 
@@ -241,9 +245,11 @@ git commit -m "docs(readme): list browser-game stack"
 ## Task 3: Pilot — sync instructions into `game-kick-fury`
 
 **Files:**
+
 - Create (via sync): `game-kick-fury/CLAUDE.md`, `game-kick-fury/.github/copilot-instructions.md`, `game-kick-fury/SKILL.md`, `game-kick-fury/.ai/base-instructions.md`, `game-kick-fury/.ai/stacks/browser-game.md`
 
 **Interfaces:**
+
 - Consumes: the `browser-game` overlay (Task 1). The sync skill fetches from `ai-instructions` `main` by default — since the overlay is not yet merged, run the sync against the local working copy, or merge Task 1–2 first (see Task 6 note). If the skill supports a local source, point it at the `ai-instructions` checkout; otherwise land the ai-instructions PR first, then sync.
 - Produces: the synced instruction files consumed by later human/agent sessions.
 
@@ -280,10 +286,12 @@ git commit -m "chore(ai): sync browser-game agent instructions"
 ## Task 4: Pilot — add `version.js` + in-game version badge
 
 **Files:**
+
 - Create: `game-kick-fury/version.js`
 - Modify: `game-kick-fury/index.html` (add `<script src="./version.js"></script>` before the inline game `<script>` at line ~73; render the badge in the existing footer nav)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `window.GAME_VERSION` global read by the badge renderer. (kick-fury uses a single inline non-module `<script>`, so the classic-script form is correct here.)
 
@@ -344,10 +352,12 @@ git commit -m "feat(version): show v1.0.0 badge from version.js"
 ## Task 5: Pilot — add `CHANGELOG.md`, `cliff.toml`, and establish v1.0.0
 
 **Files:**
+
 - Create: `game-kick-fury/CHANGELOG.md`, `game-kick-fury/cliff.toml`
 - Modify: `game-kick-fury/.gitignore` (create if absent; add `.worktrees/`)
 
 **Interfaces:**
+
 - Consumes: `version.js` version (`1.0.0`) from Task 4 — the changelog's first released version must match.
 - Produces: the release scaffolding for future `git-cliff` runs.
 
@@ -434,6 +444,7 @@ git commit -m "docs(changelog): add CHANGELOG + cliff.toml, baseline v1.0.0"
 **Files:** none (git/GitHub operations)
 
 **Interfaces:**
+
 - Consumes: branches from Tasks 1–2 (`ai-instructions`) and Tasks 3–5 (`game-kick-fury`).
 
 - [ ] **Step 1: Push and PR the overlay (ai-instructions)**

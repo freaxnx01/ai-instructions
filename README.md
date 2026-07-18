@@ -7,7 +7,7 @@ Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each pr
 - **What this repo is:** a Markdown + Bash *content* repo. It produces instruction files for *other* projects — it is not itself an app. (Working on the sources? See the root [`CLAUDE.md`](CLAUDE.md).)
 - **Composition, not references:** a consuming project's `CLAUDE.md` / `copilot-instructions.md` / `SKILL.md` are assembled from `base-instructions.md` **+ exactly one** `stacks/<stack>.md` **+** shared skills, with the **full content inlined** — no `@imports` or "see other file" pointers. All indirection happens at **build/sync time**, so the output is flat and self-contained.
 - **Consume it:** run `/sync-ai-instructions <stack>` from your project (Option A), or copy a ready-made rendering from `.ai/examples/<stack>/` (Option B). Editing an overlay here changes nothing downstream until a project re-syncs.
-- **Generated vs. source:** `.ai/stacks/dotnet-blazor.md` and `dotnet-webapi.md` are **generated** — never edit them. Edit `_partials/dotnet-core.md` (shared) or `_layers/dotnet-*.md` (per-flavour), then run `./scripts/build-stacks.sh`. Single-file overlays (`flutter.md`, `go.md`, `ci.md`, `dotnet-fx48-legacy.md`) are edited directly.
+- **Generated vs. source:** `.ai/stacks/dotnet-blazor.md` and `dotnet-webapi.md` are **generated** — never edit them. Edit `_partials/dotnet-core.md` (shared) or `_layers/dotnet-*.md` (per-flavour), then run `./scripts/build-stacks.sh`. Single-file overlays (`flutter.md`, `go.md`, `ci.md`, `dotnet-fx48-legacy.md`, `browser-game.md`) are edited directly.
 - **When `build-stacks.sh` runs:** manually, after you edit a partial/layer; and in CI (`build-stacks-drift`) on PRs touching `.ai/stacks/**` and on push to `main` — there it runs as a **drift check** (regenerate, then fail if the committed flat files differ). CI never commits regenerated files back, so the generated files in the repo are always the product of a manual run.
 
 ## Repository layout
@@ -129,6 +129,7 @@ Idempotent: safe to run for first-time setup **or** to refresh an already-initia
 | `flutter` | `.ai/stacks/flutter.md` | Flutter / Dart |
 | `go` | `.ai/stacks/go.md` | Go (modules) · Cobra CLI · Bubble Tea / Bubbles / Lipgloss TUI · stdlib `net/http` ServeMux · `log/slog` · stdlib `testing` + hand-rolled fakes · `golangci-lint` · `govulncheck` · ldflags version injection |
 | `ci` | `.ai/stacks/ci.md` | Bash · GitHub Actions reusable workflows + composite actions · `actionlint` + `shellcheck` · `act` |
+| `browser-game` | `.ai/stacks/browser-game.md` | Vanilla HTML/CSS/JS browser games · static GitHub Pages · `<canvas>` + rAF game loop · manual-WebRTC P2P · git-tag + `version.js` versioning · git-cliff changelog · buildless (manual playtest gate) |
 
 To add a new stack: see *Adding a new stack* below.
 

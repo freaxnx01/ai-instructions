@@ -46,7 +46,7 @@ overlay for buildless vanilla HTML/CSS/JS browser games. This design adds one.
 | Version surface | Git tag `vX.Y.Z` = **single source of truth**; `version.js` exports a `VERSION` const that **mirrors** the tag, rendered as a small `vX.Y.Z` badge in menu/footer/about |
 | Changelog / commits | Adopt base as-is: Conventional Commits + `cliff.toml` → `git-cliff` → `CHANGELOG.md` (Keep a Changelog); tag on `main` at release |
 | Tooling | Zero-dep, buildless; manual in-browser playtest is the test gate; optional `npx prettier` / `npx eslint` on demand (nothing committed) |
-| Rollout | Write + commit overlay, then pilot into **`game-stack-duel`** (hand-authored, has P2P) |
+| Rollout | Write + commit overlay, then pilot into **`game-kick-fury`** (genuinely hand-authored single `index.html`, has P2P — `game-stack-duel` was rejected as a pilot once it turned out to be dc-bundled) |
 
 ## Overlay structure (`.ai/stacks/browser-game.md`)
 
@@ -131,16 +131,23 @@ base (~14 KB) + overlay stays under the **39 KB** assembled-`CLAUDE.md` budget
   `go`), so the `build-stacks-drift` check stays green with no `_layers` entry.
 - Confirm the assembled size check passes: base + `browser-game.md` < 39 KB.
 
-## Pilot (in `game-stack-duel`)
+## Pilot (in `game-kick-fury`)
+
+`game-kick-fury` is a single hand-authored `index.html` (~27 KB) with one
+**inline, non-module** `<script>` and an existing footer nav. Because it does
+not use ES modules, `version.js` here is a **classic script** exposing a global
+(`window.GAME_VERSION`) loaded before the inline script — not an ES-module
+`export`. The overlay documents both forms; the module `export` form applies to
+games that already use `<script type="module">`.
 
 After the overlay is committed:
 
-1. From `game-stack-duel`, run `/sync-ai-instructions browser-game` (writes
+1. From `game-kick-fury`, run `/sync-ai-instructions browser-game` (writes
    `CLAUDE.md`, `.github/copilot-instructions.md`, `SKILL.md`,
    `.ai/base-instructions.md`, `.ai/stacks/browser-game.md`).
 2. Seed `CHANGELOG.md` (`[Unreleased]` + an initial released version matching the
-   current state), `cliff.toml`, and `version.js` with `VERSION`.
-3. Wire the `vX.Y.Z` badge into the existing UI (menu/footer/about).
+   current state), `cliff.toml`, and `version.js` (`window.GAME_VERSION`).
+3. Wire the `vX.Y.Z` badge into the existing footer nav.
 4. Verify: assembled `CLAUDE.md` < 39 KB; the game still loads and plays; the
    badge shows the version; P2P still connects.
 5. Commit on a branch in that repo; PR. (Full 23-repo rollout is a later,
@@ -157,7 +164,7 @@ After the overlay is committed:
 - [ ] Overlay codifies: buildless serve model, canvas game loop, manual-WebRTC
       P2P, git-tag-authoritative versioning with a `version.js` display mirror,
       base changelog adoption, buildless test gate, hub integration.
-- [ ] Pilot `game-stack-duel` ends up with synced `CLAUDE.md` + `CHANGELOG.md` +
+- [ ] Pilot `game-kick-fury` ends up with synced `CLAUDE.md` + `CHANGELOG.md` +
       `cliff.toml` + `version.js` + a visible version badge, still playable.
 
 ## Open follow-ups (out of scope here)

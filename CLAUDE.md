@@ -57,7 +57,7 @@ re-runs `/sync-ai-instructions`.
     _layers/
       dotnet-blazor.md          ← Blazor delta (edit this)
       dotnet-webapi.md          ← WebAPI delta (edit this)
-  skills/                       ← shared skill bodies (commit, push, ui-*)
+  skills/                       ← shared skill bodies (commit, push)
   references/                   ← long code blocks / checklists pulled out of overlays
   examples/
     dotnet/justfile             ← sample artifacts referenced by overlays

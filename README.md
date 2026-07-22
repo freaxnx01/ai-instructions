@@ -37,7 +37,6 @@ Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each pr
                                   k6, Kiota, Bruno, integration tests)
   skills/
     commit.md           · push.md
-    ui-brainstorm.md    · ui-flow.md · ui-build.md · ui-review.md
   references/                     ← long code blocks / checklists pulled out of overlays
   examples/
     dotnet/justfile               ← sample artifacts referenced by overlays

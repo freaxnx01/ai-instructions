@@ -25,6 +25,40 @@ never leave a floating ref.
 | `gitleaks` | Secrets about to be committed |
 | `pre-commit-hooks` | Whitespace, end-of-file, merge-conflict markers, oversized files, mixed line endings |
 
+## PowerShell (opt-in, not wired by default)
+
+The template config does **not** include a PowerShell hook — most repos ship zero `.ps1`,
+and the hook would cost a module install on every commit for nothing. Repos that do ship
+PowerShell add it themselves.
+
+There is no maintained upstream pre-commit hook for PSScriptAnalyzer (the request is
+still open as PSScriptAnalyzer issue #1969), so use a `repo: local` hook:
+
+```yaml
+  - repo: local
+    hooks:
+      - id: psscriptanalyzer
+        name: PSScriptAnalyzer (Windows PowerShell 5.1 compat)
+        entry: pwsh -NoProfile -Command Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 -Severity Error,Warning -EnableExit
+        language: system
+        files: \.ps1$
+        pass_filenames: false
+```
+
+`pass_filenames: false` is **required**, not tidiness: `Invoke-ScriptAnalyzer -Path`
+takes a single string, so the filenames pre-commit would otherwise append make it fail
+with *"A positional parameter cannot be found"* as soon as a commit touches two `.ps1`
+files. `files: \.ps1$` still gates *whether* the hook runs; `-Path . -Recurse` decides
+what it scans.
+
+Copy [`templates/pre-commit/PSScriptAnalyzerSettings.psd1`](https://github.com/freaxnx01/ai-instructions/blob/main/templates/pre-commit/PSScriptAnalyzerSettings.psd1)
+to the repo root alongside it. Two caveats: the hook needs `pwsh` on `PATH` (PowerShell 7
+— the analyzer cannot detect PS 7 syntax when run *under* 5.1), and PSScriptAnalyzer must
+be installed (`Install-Module PSScriptAnalyzer`), which pre-commit will not do for you.
+CI-only enforcement is the lower-friction alternative.
+
+Rules, settings, and the compatibility gotchas: [`powershell-5.1.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/base/powershell-5.1.md).
+
 ## Docker caveat
 
 `actionlint-docker` and `hadolint-docker` run their linters via Docker, so a

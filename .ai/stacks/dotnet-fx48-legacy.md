@@ -118,6 +118,10 @@ Layout + examples: [`xunit-desktop-test.md`](https://github.com/freaxnx01/ai-ins
 - **CI: GitLab CI on a Windows runner** (VS Build Tools) invoking `build.ps1`;
   Azure DevOps Pipelines is the equivalent alternative. Scaffold: [`gitlab-ci.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-fx48-legacy/gitlab-ci.md)
 - Keep build logic in Cake, not CI YAML, so it runs identically locally.
+- **`build.ps1` runs on customer and CI Windows boxes — it must be Windows PowerShell 5.1
+  compatible.** No `??`, no ternary, no `&&`/`||` chains; `$IsWindows` does not exist.
+  The CI job invokes it as `powershell -ExecutionPolicy Bypass -File ./build.ps1`, not
+  `pwsh`. Full rules: [`powershell-5.1.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/base/powershell-5.1.md)
 
 ---
 

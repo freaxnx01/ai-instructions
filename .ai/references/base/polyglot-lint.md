@@ -39,11 +39,17 @@ still open as PSScriptAnalyzer issue #1969), so use a `repo: local` hook:
     hooks:
       - id: psscriptanalyzer
         name: PSScriptAnalyzer (Windows PowerShell 5.1 compat)
-        entry: pwsh -NoProfile -Command Invoke-ScriptAnalyzer -EnableExit -Severity Error,Warning -Settings ./PSScriptAnalyzerSettings.psd1 -Path
+        entry: pwsh -NoProfile -Command Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 -Severity Error,Warning -EnableExit
         language: system
         files: \.ps1$
-        require_serial: true
+        pass_filenames: false
 ```
+
+`pass_filenames: false` is **required**, not tidiness: `Invoke-ScriptAnalyzer -Path`
+takes a single string, so the filenames pre-commit would otherwise append make it fail
+with *"A positional parameter cannot be found"* as soon as a commit touches two `.ps1`
+files. `files: \.ps1$` still gates *whether* the hook runs; `-Path . -Recurse` decides
+what it scans.
 
 Copy [`templates/pre-commit/PSScriptAnalyzerSettings.psd1`](https://github.com/freaxnx01/ai-instructions/blob/main/templates/pre-commit/PSScriptAnalyzerSettings.psd1)
 to the repo root alongside it. Two caveats: the hook needs `pwsh` on `PATH` (PowerShell 7

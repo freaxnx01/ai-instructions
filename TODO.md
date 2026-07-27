@@ -49,20 +49,21 @@ Per Decision #9 ordering, expanded per the second open question above.
 
 - [ ] Forgejo: set up pull-mirrors for `ai-instructions`, `ideas-lab`,
       `bridge`, `agent-pipeline` per Decision #8.
-- [ ] **`base-instructions.md` headroom is 1540 B, capped by `dotnet-webapi`
-      — revisit only when a base addition doesn't fit.** Was 5 B after the
-      PowerShell 5.1 work; the 2026-07-27 refactor moved bulk out of `go.md`
-      (24407→20356), `flutter.md` (22844→20147) and
-      `_layers/dotnet-webapi.md` (11707→10291) into `.ai/references/`.
-      Headroom is capped by the **minimum** across all stacks, so check every
-      stack, not just the largest. Remaining .NET candidates are dense
-      operative rules — dotnet-core's C# Conventions, Logging &
-      Observability, server-side Localization, and the webapi layer's
-      Authentication — worth ~2300 B combined but moving rules agents need
-      inline; deliberately not taken. Note the 39500 B ceiling is a
-      self-imposed 500 B margin under Claude Code's real 40k-char warning.
+- [ ] **Headroom is now ~3644 B and the cap has shifted — further gains need
+      `go.md`, not .NET.** `dotnet-webapi` 3644 B, `go` 4056 B, `flutter`
+      4265 B, `dotnet-blazor` 6433 B. Because headroom is the **minimum**
+      across all stacks, anything beyond ~4056 B requires trimming `go.md`
+      (20356 B) and `flutter.md` (20147 B) again, not the .NET overlays.
+      No action needed unless a base addition doesn't fit. The 39500 B
+      ceiling is a self-imposed 500 B margin under Claude Code's real
+      40k-char warning, so raising it is not the fix.
 
 ## Done
+
+- [x] Reclaim assembled-`CLAUDE.md` headroom — 5 B → ~3644 B across two
+      passes (2026-07-27, commits `e6aec3d` + the .NET follow-up). Pass 1
+      took `go.md`, `flutter.md` and the webapi layer; pass 2 took the .NET
+      partial. Budget now documented in `CLAUDE.md`.
 
 - [x] Place workflow doc at `workflows/personal-dev-workflow.md`
       (2026-05-25, commit `a3e4896`).

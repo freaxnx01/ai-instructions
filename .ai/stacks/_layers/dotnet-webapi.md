@@ -30,30 +30,26 @@ Status codes, GET-body rationale, ProblemDetails registration: [`http-convention
 
 ## API Versioning
 
-`Asp.Versioning.Http` with **URL-segment** versioning. Format `v1.0`, `v2.0`, `v2.1` (`MAJOR.MINOR`). The minor segment stays in the URL even when only the major bumps, keeping the URL shape stable across the API's lifetime.
+`Asp.Versioning.Http` with **URL-segment** versioning, format `v1.0` / `v2.1` (`MAJOR.MINOR`). The minor segment stays in the URL even when only the major bumps, keeping URL shape stable.
 
-- **Unversioned URLs (`/api/orders/...`) are allowed only for backward compatibility** — they resolve to v1.0 explicitly, never "latest". Rolling out v2.0 must not change what an unversioned caller hits.
-- Deprecate with `.HasDeprecatedApiVersion(1.0)` plus a `Sunset: <RFC 7231 date>` response header.
-- Removal is separate from deprecation — no version is removed without an announced sunset window.
+- **Unversioned URLs are backward-compatibility only** — they resolve to v1.0 explicitly, never "latest". Shipping v2.0 must not change what an unversioned caller hits.
+- Deprecate with `.HasDeprecatedApiVersion(1.0)` plus a `Sunset: <RFC 7231 date>` header; removal is a separate step, never without an announced sunset window.
 
-Registration scaffold: [`.ai/references/dotnet-webapi/api-versioning.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/api-versioning.md)
+Registration scaffold: [`api-versioning.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/api-versioning.md)
 
 ---
 
 ## Authentication
 
-**One scheme per API project**, chosen at bootstrap and applied to every endpoint — never mixed. Three approved schemes (full rules in the reference doc):
+**One scheme per API project**, chosen at bootstrap and applied to every endpoint — never mixed:
 
-- **Pass-through** (BFF / wrapper APIs): forward `Authorization` upstream verbatim; do not validate, decode, log, or call `AddAuthentication()`. Any non-proxied endpoint disqualifies the project from pass-through.
-- **API key** (`X-API-Key` header, no query-string fallback): custom handler, keys in secret store, constant-time compare (`CryptographicOperations.FixedTimeEquals`), accept a small rotating set.
-- **JWT bearer**: validate issuer/audience/lifetime/signing key in every environment (no exceptions, including local); authorize via named policies, not raw roles. This API **consumes** tokens — issuance belongs in a dedicated identity service.
+- **Pass-through** (BFF / wrapper APIs) — forward `Authorization` upstream verbatim; do not validate, decode, or log it, and register no scheme. Any non-proxied endpoint disqualifies the project.
+- **API key** — `X-API-Key` header only, no query-string fallback; constant-time compare (`CryptographicOperations.FixedTimeEquals`); keys in a secret store.
+- **JWT bearer** — validate issuer, audience, lifetime and signing key in **every** environment, local included; authorize via named policies, not raw roles. This API consumes tokens; issuance belongs to a dedicated identity service.
 
-Cross-cutting:
+`[Authorize]` / `.RequireAuthorization()` is the default for API-key and JWT projects. Anonymous endpoints are limited to `/health/*`, `/scalar`, and the OpenAPI document.
 
-- `[Authorize]` / `.RequireAuthorization()` is the default for API key + JWT projects; opt out per-endpoint with `[AllowAnonymous]`. Pass-through projects register no scheme.
-- Anonymous endpoints are limited to `/health/*`, `/scalar`, and the OpenAPI document.
-
-Full per-scheme rules: [`.ai/references/dotnet-webapi/authentication-schemes.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/authentication-schemes.md)
+Per-scheme rules: [`authentication-schemes.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/authentication-schemes.md)
 
 ---
 
@@ -132,12 +128,12 @@ Registration scaffold: [`.ai/references/dotnet-webapi/response-compression.md`](
 
 ## OpenAPI & Scalar
 
-- API metadata (Title / Version / Description / Contact / License) is mandatory — published APIs without it are rejected in review
+- API metadata (Title / Version / Description / Contact / License) is **mandatory** — published APIs without it are rejected in review
 - Scalar UI at `/scalar`; OpenAPI document at `/openapi/v1.0.json`
-- Code samples enabled for **bash curl** and **PowerShell** at minimum; other clients opt-in
-- Deprecated endpoints carry the OpenAPI `deprecated: true` flag *and* return a `Sunset` response header
+- Code samples for **bash curl** and **PowerShell** at minimum
+- Deprecated endpoints carry `deprecated: true` *and* return a `Sunset` header
 
-Registration scaffold: [`.ai/references/dotnet-webapi/openapi-scalar.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/openapi-scalar.md)
+Registration scaffold: [`openapi-scalar.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/openapi-scalar.md)
 
 ---
 

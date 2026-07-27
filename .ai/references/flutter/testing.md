@@ -2,7 +2,6 @@
 
 Base TDD rules live in `base-instructions.md`. This file covers the Flutter-specific detail.
 
-
 ## Layout
 
 ```text

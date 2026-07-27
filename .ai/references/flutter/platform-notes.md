@@ -1,6 +1,5 @@
 # Flutter — platform-specific notes
 
-
 ## Android
 
 - Manifest at `android/app/src/main/AndroidManifest.xml`. Add `<uses-permission>` only when needed; `INTERNET` is enough for an HTTP-only app.

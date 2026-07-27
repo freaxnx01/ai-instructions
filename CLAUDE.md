@@ -64,6 +64,7 @@ re-runs `/sync-ai-instructions`.
     dotnet-blazor/              ← pre-assembled dotnet-blazor rendering (Option B template)
 scripts/
   build-stacks.sh               ← composes _partials + _layers → flat stacks/dotnet-*.md
+  check-claude-md-size.sh       ← enforces the 39500-byte assembled-CLAUDE.md budget
 .github/workflows/
   build-stacks-drift.yml        ← CI: fails if generated files drift from sources
 .claude/commands/               ← Claude Code slash-command wrappers for the skills
@@ -94,6 +95,32 @@ partial/layer split — edit them directly.
 
 ---
 
+## The Other Rule That Bites — the byte budget
+
+Every stack's **assembled** `CLAUDE.md` (sync header + `base-instructions.md` + one stack
+overlay) must stay under **39500 bytes**. `scripts/check-claude-md-size.sh` enforces it,
+and the **pre-commit hook runs it** — so a commit that blows the budget is *rejected*, not
+merely flagged. The ceiling is not arbitrary: Claude Code prints "Large CLAUDE.md will
+impact performance" above 40k chars, and 39500 is a 500-byte safety margin under that.
+
+Two consequences that are easy to miss:
+
+- **Adding to `base-instructions.md` is the expensive move.** Base is inlined into *every*
+  stack, so a 1 KB base addition costs 1 KB in all seven assembled files at once.
+- **Your headroom is the *minimum* spare across all stacks, not the average and not the
+  largest overlay.** One tight stack blocks every base addition. Check all of them:
+
+  ```bash
+  ./scripts/check-claude-md-size.sh
+  ```
+
+When it fails, the fix is to move content to `.ai/references/` and leave a condensed
+summary plus a link — see `.ai/references/go/tech-stack.md` for the shape. Keep operative
+rules and guardrails inline; move elaboration, long code blocks, and tables. Raising
+`MAX_ASSEMBLED_BYTES` is not a fix — it just moves the problem into the consuming project.
+
+---
+
 ## Essential Commands
 
 ```bash
@@ -102,6 +129,12 @@ partial/layer split — edit them directly.
 
 # Verify you're in sync with the sources (what CI checks)
 ./scripts/build-stacks.sh && git diff --exit-code .ai/stacks/dotnet-*.md
+
+# Check the assembled-CLAUDE.md byte budget (also run by the pre-commit hook)
+./scripts/check-claude-md-size.sh
+
+# Lint the Markdown the way CI does, without installing node
+docker run --rm -v "$PWD":/workdir docker.io/davidanson/markdownlint-cli2:latest
 ```
 
 There is no compiler, package manager, or test runner in this repo.
@@ -117,6 +150,8 @@ There is no compiler, package manager, or test runner in this repo.
   the new flat file too.
 - **Long code blocks / checklists** → keep overlays lean by moving them under
   `.ai/references/` and linking, following the existing pattern.
+- **Anything added to base or an overlay** → run `./scripts/check-claude-md-size.sh` before
+  committing; the budget is tight and the pre-commit hook rejects an overrun.
 
 ---
 

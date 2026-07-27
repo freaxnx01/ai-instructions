@@ -49,18 +49,18 @@ Per Decision #9 ordering, expanded per the second open question above.
 
 - [ ] Forgejo: set up pull-mirrors for `ai-instructions`, `ideas-lab`,
       `bridge`, `agent-pipeline` per Decision #8.
-- [ ] **`base-instructions.md` is out of headroom — reclaim space in
-      `.ai/stacks/go.md` and `.ai/stacks/dotnet-webapi.md`.** After the
-      PowerShell 5.1 work (2026-07-27, commit `8904441`) the `go` stack
-      assembles to 39495 B against the 39500 B budget in
-      `scripts/check-claude-md-size.sh` — **5 bytes spare**. `dotnet-webapi`
-      has 124. The next base addition of any size fails the pre-commit hook
-      and CI, and adding the PowerShell rule already cost a section
-      (Localization → `.ai/references/base/localization.md`) to pay for it.
-      `go.md` (24407 B) and `dotnet-webapi.md` (24288 B) are the two largest
-      overlays; move their long blocks under `.ai/references/` per the
-      existing pattern. The 39500 B ceiling is not arbitrary — Claude Code
-      warns above 40k chars — so raising it is not the fix.
+- [ ] **`base-instructions.md` headroom is 1540 B, capped by `dotnet-webapi`
+      — revisit only when a base addition doesn't fit.** Was 5 B after the
+      PowerShell 5.1 work; the 2026-07-27 refactor moved bulk out of `go.md`
+      (24407→20356), `flutter.md` (22844→20147) and
+      `_layers/dotnet-webapi.md` (11707→10291) into `.ai/references/`.
+      Headroom is capped by the **minimum** across all stacks, so check every
+      stack, not just the largest. Remaining .NET candidates are dense
+      operative rules — dotnet-core's C# Conventions, Logging &
+      Observability, server-side Localization, and the webapi layer's
+      Authentication — worth ~2300 B combined but moving rules agents need
+      inline; deliberately not taken. Note the 39500 B ceiling is a
+      self-imposed 500 B margin under Claude Code's real 40k-char warning.
 
 ## Done
 

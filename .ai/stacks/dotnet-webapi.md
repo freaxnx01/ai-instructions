@@ -261,30 +261,17 @@ Full table: [`.ai/references/dotnet/tech-stack.md`](https://github.com/freaxnx01
 
 ---
 
-## API Design — Minimal API
+## API Design — Minimal API (WebAPI additions)
 
-- Endpoints grouped by module via `IEndpointRouteBuilder` extension methods
+Endpoint grouping, one-handler-per-file, FluentValidation at the boundary, and
+`ProblemDetails` errors are baseline — see the `dotnet-core` partial above. On top of that:
+
 - Route prefix `/api/v{version}/{module}/...` — URL format under *API versioning* below
-- One handler per file when the body is non-trivial; inline lambdas only for true one-liners
-- FluentValidation runs at the boundary, before any handler logic
+- `201`/`202` carry a `Location` header; use `422` (not `400`) for semantic validation failures; `429` carries `Retry-After`
+- **GET with a request body is forbidden for new endpoints** — undefined semantics (RFC 9110), so proxies and caches may drop it. Use query params, or `POST /search` for large/sensitive filter sets.
+- `ProblemDetails` gains a `traceId` extension from the current `Activity.TraceId`
 
-Endpoint group scaffold: [`.ai/references/dotnet/endpoint-group.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet/endpoint-group.md) (use the versioned route variant)
-
-### HTTP status code conventions
-
-Non-obvious rules: `201 Created` and `202 Accepted` must include a `Location` header (to the new resource / status resource respectively); use `422` (not `400`) for semantic validation failures (body parsed OK, content invalid); `429` must include `Retry-After`.
-
-### HTTP GET with request body — forbidden for new endpoints
-
-GET bodies have undefined semantics (RFC 9110) — proxies and caches may drop them. New endpoints: use query params, or `POST /search` for large/sensitive filter sets. Legacy: allowed for backwards-compat only; mark `[Obsolete]` and emit a `Sunset` header.
-
-### Errors — always ProblemDetails
-
-- Every error response — including from middleware and model binding — is RFC 9457 `ProblemDetails`
-- Never return raw strings, anonymous `{ error: "..." }` objects, or HTML error pages
-- Populate `type`, `title`, `status`, `detail`, `instance`; add a `traceId` extension from the current `Activity.TraceId`
-
-Registration scaffold: [`.ai/references/dotnet-webapi/problem-details.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/problem-details.md)
+Status codes, GET-body rationale, ProblemDetails registration: [`http-conventions.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/http-conventions.md)
 
 ---
 
@@ -416,34 +403,11 @@ kiota generate -l CSharp -d https://api.example.com/openapi/v1.0.json -o ./clien
 
 ## Testing (WebAPI additions)
 
-Unit-test conventions and the baseline `<Module>.UnitTests` / `<Module>.IntegrationTests` layout live in the `dotnet-core` partial. For WebAPI, the integration project uses `WebApplicationFactory` + Testcontainers, plus one optional contract project:
+Unit-test conventions and the baseline `<Module>.UnitTests` / `<Module>.IntegrationTests` layout live in the `dotnet-core` partial. No bUnit, no Playwright — those are Blazor-stack concerns. An optional `tests/Api.ContractTests/` pins an OpenAPI snapshot.
 
-```text
-tests/
-  Api.ContractTests/          ← optional — pinned OpenAPI snapshot
-```
-
-No bUnit, no Playwright — those are Blazor-stack concerns.
-
-### Integration tests — WebApplicationFactory + Testcontainers
-
-- `WebApiFactory : WebApplicationFactory<Program>` swaps real infrastructure for Testcontainers (Postgres, Redis, etc.)
-- Each test class owns its database via Testcontainers — no shared mutable state across classes
-- Auth in tests: register a test scheme injecting a known principal — never call the real identity provider
-
-Test class scaffold: [`.ai/references/dotnet-webapi/integration-test.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/integration-test.md)
-
-### Manual / exploratory testing — Bruno
-
-Collections in `bruno/`, one folder per module, committed to Git. Base URLs and tokens come from Bruno environments — never hardcoded. When an endpoint changes, update its Bruno request in the same PR with realistic bodies and useful assertions.
-
-Layout + naming: [`.ai/references/dotnet-webapi/bruno-layout.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/bruno-layout.md)
-
-### Performance / load testing — k6
-
-Scripts in `perf/`, one scenario per critical journey or hot endpoint. Naming: `<endpoint-or-journey>.<profile>.js`, profile ∈ `smoke | load | stress | soak`. Every script declares `thresholds` for `http_req_duration` and `http_req_failed` — a failed threshold fails CI. Env via `K6_BASE_URL`; auth via `perf/lib/` helpers — never hardcoded. CI: smoke blocks every PR; load / stress / soak on demand.
-
-Layout + sample script + profile defs: [`.ai/references/dotnet-webapi/k6-scenarios.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/k6-scenarios.md)
+- **Integration** — `WebApiFactory : WebApplicationFactory<Program>` swaps real infrastructure for Testcontainers. Each test class owns its database; no shared mutable state. Auth in tests registers a test scheme injecting a known principal — never call the real identity provider. Scaffold: [`integration-test.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/integration-test.md)
+- **Manual / exploratory** — Bruno collections in `bruno/`, one folder per module, committed. Base URLs and tokens come from Bruno environments, never hardcoded; update the request in the same PR as the endpoint. Layout: [`bruno-layout.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/bruno-layout.md)
+- **Performance / load** — k6 scripts in `perf/`, named `<endpoint-or-journey>.<profile>.js` (`smoke | load | stress | soak`). Every script declares `thresholds` for `http_req_duration` and `http_req_failed`; a failed threshold fails CI. Smoke blocks every PR, the rest run on demand. Layout + sample: [`k6-scenarios.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-webapi/k6-scenarios.md)
 
 ---
 

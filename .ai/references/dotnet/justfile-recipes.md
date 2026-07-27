@@ -32,6 +32,7 @@ CI (GitHub Actions): `extractions/setup-just@v2`.
 
 ## Cross-OS authoring rules
 
+- **Recipes are dev-loop tooling and may assume `pwsh`.** They run only on developer machines, so PS 7 syntax is fine here. This is the documented exemption from the base **Windows PowerShell 5.1** floor — which still binds any `.ps1` a customer runs (`build.ps1`, install/deploy scripts, anything in a release artifact). Do not copy recipe bodies into a shipped script without checking them against [`powershell-5.1.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/base/powershell-5.1.md).
 - **Multi-line Windows recipes need a `#!/usr/bin/env pwsh` shebang.** Without one, just invokes `pwsh` once per line and shell variables (`$cur`, `$xml`, …) do not persist. Single-line Windows recipes can omit the shebang and rely on the `set windows-shell` directive.
 - **Unix recipes use portable POSIX tools** (`sed -n`, `mktemp`, `mv`) — not `grep -oP` or `sed -i`. This way the same recipe runs on Linux (GNU) and macOS (BSD) without coreutils.
 - **PowerShell output for piping**: use `Write-Output` (not `Write-Host`) when the value may be consumed by `$(just <recipe>)` — `Write-Host` writes to the host stream and is invisible to capture.

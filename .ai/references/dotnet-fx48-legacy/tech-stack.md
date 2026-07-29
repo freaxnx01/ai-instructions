@@ -4,7 +4,7 @@
 |---|---|
 | Target framework | `net48` (full .NET Framework); projects in a single solution may mix **SDK-style** (`Sdk="Microsoft.NET.Sdk"` + `PackageReference`) and **classic** (`<TargetFrameworkVersion>v4.8</TargetFrameworkVersion>` + `packages.config`) styles |
 | Language | C# (the latest lang version the installed SDK/compiler allows on net48); **no** implicit usings, **no** nullable reference types by default |
-| REST framework | [Nancy](https://github.com/NancyFx/Nancy) 2.x on **OWIN/Katana** — self-hosted via `Microsoft.Owin.Host.HttpListener` and/or hosted in **IIS**. (Alternative legacy flavour: ASP.NET Web API 2 on OWIN.) |
+| REST framework | [Nancy](https://github.com/NancyFx/Nancy) 2.x on **OWIN/Katana** — self-hosted via `Microsoft.Owin.Host.HttpListener` and/or hosted in **IIS**. Alternative legacy flavour: **ASP.NET Web API 2** (`System.Web.Http`), self-host via `Microsoft.AspNet.WebApi.Owin` or IIS via `System.Web.Http.WebHost` — see [`webapi2-owin-host.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-fx48-legacy/webapi2-owin-host.md) |
 | Views (optional) | Nancy SuperSimpleViewEngine (`.sshtml`) |
 | Hosting | Console / **Windows Service** (`System.ServiceProcess`) for self-host; IIS for the web host |
 | DI | Nancy **TinyIoC** (built in); register in a custom `Bootstrapper` |

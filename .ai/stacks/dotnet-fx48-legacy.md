@@ -68,18 +68,21 @@ centralized `Directory.Build.props`.
 
 ---
 
-## REST — Nancy on OWIN
+## REST — two legacy flavours, detect before adding endpoints
 
-- One `NancyModule` per resource area, mounted on a base path; bind request
-  bodies with `this.Bind<T>()`; return JSON via `Response.AsJson` / `Negotiate`.
-- Register dependencies in a custom `Bootstrapper` (TinyIoC).
-- Shape errors centrally in the bootstrapper's `OnError` pipeline as a
-  ProblemDetails-style JSON body — never leak stack traces.
-- Self-host (Console / Windows Service) and IIS share one OWIN `Startup`.
-- Alternative legacy REST flavour: **ASP.NET Web API 2 on OWIN** — same hosting
-  model, controllers instead of modules.
+This stack covers two net48 REST flavours; check which one an existing project
+already uses before adding an endpoint — never mix both in one project.
 
-Scaffold (module, bootstrapper, Startup, self-host, IIS): [`nancy-owin-host.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-fx48-legacy/nancy-owin-host.md)
+- **Nancy on OWIN** — `NancyModule`s + `Bootstrapper` (TinyIoC); bind request
+  bodies with `this.Bind<T>()`, return JSON via `Response.AsJson` / `Negotiate`;
+  errors shaped in the bootstrapper's `OnError` pipeline. Self-host and IIS
+  share one OWIN `Startup`. Scaffold: [`nancy-owin-host.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-fx48-legacy/nancy-owin-host.md)
+- **ASP.NET Web API 2 on OWIN/IIS** — `ApiController`s + attribute routing
+  (`config.MapHttpAttributeRoutes()`); errors shaped via `IExceptionHandler` /
+  `IExceptionLogger`; DI via `IDependencyResolver` (Autofac/Unity), not TinyIoC.
+  Self-host (`Microsoft.AspNet.WebApi.Owin`) and IIS (`System.Web.Http.WebHost`)
+  use different packages/entry points — unlike Nancy's shared `Startup`.
+  Scaffold: [`webapi2-owin-host.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/dotnet-fx48-legacy/webapi2-owin-host.md)
 
 ---
 

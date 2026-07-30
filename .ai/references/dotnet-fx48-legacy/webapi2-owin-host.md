@@ -47,6 +47,7 @@ namespace Acme.Service.Rest.Controllers
 ## HttpConfiguration — attribute routing + Newtonsoft as the configured formatter
 
 ```csharp
+using Autofac.Integration.WebApi;
 using System.Net.Http.Formatting;
 using System.Web.Http;
 using Newtonsoft.Json.Serialization;
@@ -69,7 +70,8 @@ namespace Acme.Service.Rest
             config.Services.Add(typeof(System.Web.Http.ExceptionHandling.IExceptionLogger),
                 new NLogExceptionLogger());
 
-            config.DependencyResolver = new AutofacWebApiDependencyResolver(BuildContainer());
+            config.DependencyResolver =
+                new AutofacWebApiDependencyResolver(ServiceRegistration.BuildContainer());
         }
     }
 }
@@ -130,6 +132,7 @@ Web API 2 has no `OnError` pipeline; it separates **logging** (side effects,
 never changes the response) from **handling** (produces the response):
 
 ```csharp
+using System.Net.Http;
 using System.Web.Http.ExceptionHandling;
 
 namespace Acme.Service.Rest
@@ -169,17 +172,22 @@ via `IDependencyResolver`. Autofac shown (`Autofac.WebApi2` package):
 
 ```csharp
 using Autofac;
-using Autofac.Integration.WebApi;
 
-private static IContainer BuildContainer()
+namespace Acme.Service.Rest
 {
-    var builder = new ContainerBuilder();
-    builder.RegisterType<WidgetService>().As<IWidgetService>().InstancePerRequest();
-    return builder.Build();
+    internal static class ServiceRegistration
+    {
+        public static IContainer BuildContainer()
+        {
+            var builder = new ContainerBuilder();
+            builder.RegisterType<WidgetService>().As<IWidgetService>().InstancePerRequest();
+            return builder.Build();
+        }
+    }
 }
 ```
 
-`config.DependencyResolver = new AutofacWebApiDependencyResolver(container);`
+`config.DependencyResolver = new AutofacWebApiDependencyResolver(ServiceRegistration.BuildContainer());`
 replaces the TinyIoC registration step from the Nancy `Bootstrapper`. Unity is
 the equivalent alternative (`Unity.WebApi` package,
 `UnityDependencyResolver`) — detect which one is already referenced before

@@ -125,10 +125,13 @@ Idempotent: safe to run for first-time setup **or** to refresh an already-initia
 | `dotnet-blazor` | `.ai/stacks/dotnet-blazor.md` | .NET 10 · ASP.NET Core · Blazor + MudBlazor · EF Core · xUnit / bUnit / Playwright · Serilog + OpenTelemetry · Alpine Docker |
 | `dotnet-webapi` | `.ai/stacks/dotnet-webapi.md` | .NET 10 · ASP.NET Core REST API · Asp.Versioning.Http · ProblemDetails · OpenAPI + Scalar · JWT / API key / pass-through auth · `WebApplicationFactory` + Testcontainers · Bruno · k6 · Kiota |
 | `dotnet-fx48-legacy` | `.ai/stacks/dotnet-fx48-legacy.md` | .NET Framework 4.8 (legacy) · mixed SDK-style + classic `.csproj` · Nancy + OWIN/Katana (self-host + IIS) · NLog · Newtonsoft.Json · xUnit-desktop + Moq + Shouldly · Cake → `msbuild.exe` · GitLab CI on Windows · centralized `Directory.Build.props` |
+| `dotnet-library` | `.ai/stacks/dotnet-library.md` | Modern SDK-style .NET class libraries + console tools (no web host) · `netstandard2.0`/current LTS · NuGet publishing · xUnit · standalone overlay, not built on the `dotnet-core` service partial |
 | `flutter` | `.ai/stacks/flutter.md` | Flutter / Dart |
 | `go` | `.ai/stacks/go.md` | Go (modules) · Cobra CLI · Bubble Tea / Bubbles / Lipgloss TUI · stdlib `net/http` ServeMux · `log/slog` · stdlib `testing` + hand-rolled fakes · `golangci-lint` · `govulncheck` · ldflags version injection |
 | `ci` | `.ai/stacks/ci.md` | Bash · GitHub Actions reusable workflows + composite actions · `actionlint` + `shellcheck` · `act` |
 | `browser-game` | `.ai/stacks/browser-game.md` | Vanilla HTML/CSS/JS browser games · static GitHub Pages · `<canvas>` + rAF game loop · manual-WebRTC P2P · git-tag + `version.js` versioning · git-cliff changelog · buildless (manual playtest gate) |
+| `gdscript-godot` | `.ai/stacks/gdscript-godot.md` | Godot Engine 4.x · typed GDScript · scene/script pairing · Input Map actions · GUT for pure-logic tests · manual playtest gate · headless export CI |
+| `shell-scripts` | `.ai/stacks/shell-scripts.md` | Personal Bash/PowerShell automation script collections · no build step · Windows PowerShell 5.1 compatibility by default · shellcheck / PSScriptAnalyzer · Bats / Pester where logic justifies it |
 
 To add a new stack: see *Adding a new stack* below.
 

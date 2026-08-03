@@ -204,6 +204,34 @@ Template: [`.ai/references/base/pr-description-template.md`](https://github.com/
 
 ---
 
+## Issue Title Conventions
+
+Issue titles follow the same Conventional Commits format as commits and PR
+titles: `<type>(<scope>): <short summary>`, same **Types** list above
+(`feat`, `fix`, `test`, `refactor`, `chore`, `docs`, `ci`, `perf`). `<scope>`
+is optional — include it when there's an obvious one (a feature area, a
+file/module), omit it (`type: summary`, no parens) when there isn't; don't
+force one.
+
+This is the standard signal for "is this a new capability, a fix, or
+maintenance" — don't introduce a parallel `type:*` label for the same
+purpose. (An earlier pass briefly used `type:feat`/`type:fix`/`type:chore`
+labels on some `game-*` repos before this convention was written down here;
+those were retrofitted to title prefixes and the labels should not be
+reused.)
+
+```text
+feat(hub): show original title + Wikipedia link for retro clones
+fix(map): show Ukraine with 1991 borders incl. Crimea
+chore: move off GitHub Pages to a solution with visit logs and monitoring
+```
+
+`needs-enrichment` (and any other workflow label) is orthogonal and stacks
+normally — the type prefix says *what kind* of change, the label says
+*where it is in the pipeline*.
+
+---
+
 ## CI/CD (generic outline)
 
 Pipeline stages: `build` → `test` → `security-scan` → `container-build` → `push`

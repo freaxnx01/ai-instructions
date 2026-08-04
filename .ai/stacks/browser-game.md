@@ -169,7 +169,31 @@ Manual verification checklist before every push/release:
 - [ ] P2P: both peers connect, exchange state, and the game survives a
       disconnect/reconnect
 
-Optional, nothing committed: `npx prettier --write .`, `npx eslint .`.
+**For anything interactive that JS drives at runtime — a toggle, a button
+that changes on-screen state, anything added via `addEventListener` or DOM
+injection — verify it with an actual browser executing real JS, not just a
+`curl`/text fetch of the HTML.** A static fetch confirms the markup and
+script tags are present; it cannot confirm a click handler actually fires,
+or that a framework elsewhere on the page didn't silently strip it. Playwright
+(`pip install playwright && playwright install chromium`, or already
+available in this environment) is the right tool:
+
+```python
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    page = browser.new_page()
+    page.goto("https://github.freaxnx01.ch/game-<name>/", wait_until="networkidle")
+    page.locator("#some-button").click()
+    assert page.locator("text=Expected result").count() > 0
+    browser.close()
+```
+
+This is how the `#game-nav` i18n-toggle bug above was actually found — a
+`curl` check of `index.html`/`i18n.js` showed everything present and
+correct, but the button was invisible and non-functional in a real browser
+the whole time.
 
 ---
 
@@ -215,9 +239,30 @@ nothing about any individual game's strings.
     window.dispatchEvent(new CustomEvent("gg-langchange", { detail: { lang: lang } }));
   };
 
+  // Delegated on `document`, not on the button itself: some games' #game-nav
+  // is managed by a UI framework (e.g. a dc-tool-bundled game whose runtime
+  // mounts a React root over it) that periodically recreates its DOM
+  // subtree from the framework's own tracked template — silently dropping
+  // any listener attached directly to a child node (and stripping raw
+  // `onclick="..."` attributes, since a framework like React expects a
+  // function-valued prop, not a string). A listener on `document` is
+  // outside that subtree, so it survives regardless of how often the
+  // button node underneath it gets replaced; it just re-checks
+  // `event.target` on every click. See the "Framework-managed #game-nav"
+  // note below.
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest && e.target.closest("#gg-lang-toggle");
+    if (btn) window.ggSetLang(window.GG_LANG === "en" ? "de" : "en");
+  });
+
   function injectToggle() {
+    // A pre-existing button (e.g. static markup inside a framework-managed
+    // #game-nav — see below) is left alone; the delegated listener above
+    // already covers clicks on it.
+    if (document.getElementById("gg-lang-toggle")) return;
+
     var nav = document.getElementById("game-nav");
-    if (!nav || document.getElementById("gg-lang-toggle")) return;
+    if (!nav) return;
 
     var sep = document.createElement("span");
     sep.setAttribute("aria-hidden", "true");
@@ -232,12 +277,9 @@ nothing about any individual game's strings.
       "background:none;border:none;padding:0;margin:0;font:inherit;color:#8fd8e8;cursor:pointer";
     btn.textContent = window.GG_LANG.toUpperCase();
 
-    btn.addEventListener("click", function () {
-      window.ggSetLang(window.GG_LANG === "en" ? "de" : "en");
-    });
-
     window.addEventListener("gg-langchange", function (e) {
-      btn.textContent = e.detail.lang.toUpperCase();
+      var b = document.getElementById("gg-lang-toggle");
+      if (b) b.textContent = e.detail.lang.toUpperCase();
     });
 
     nav.appendChild(sep);
@@ -259,8 +301,40 @@ Load it in `index.html`, right where `version.js` loads:
 <script src="./i18n.js"></script>
 ```
 
-The toggle button is appended into the existing `#game-nav` footer — no new
-UI surface to design per game.
+For a plain-HTML game, `injectToggle()` appends the button into the existing
+`#game-nav` footer itself — no new UI surface to design per game.
+
+### Framework-managed `#game-nav` (dc-tool / DCLogic games)
+
+Some bundled games (identified by a `data-dc-script` / `type="text/x-dc"`
+marker) mount a full UI framework (React, via the dc-tool runtime) over the
+**entire page**, `#game-nav` included, even when `#game-nav` itself is
+static, hand-written markup rather than part of the game's own
+`class Component` template. That framework periodically recreates
+`#game-nav`'s DOM subtree from its own tracked copy — confirmed with
+Playwright against a real pilot (`game-iron-valhalla`): a button injected by
+`injectToggle()` flickered in and out during the first ~0.5s of settling
+re-renders, then vanished for good and never came back. The same is true for
+a raw `onclick="..."` attribute added to static markup by hand — React
+silently strips it (it expects a function-valued `onClick` prop, not a
+string) rather than erroring loudly, so the failure mode is "button visible,
+does nothing," not a crash.
+
+For these games, don't rely on `injectToggle()` to create the button. Add it
+as static markup directly in `#game-nav`'s existing HTML, with a **static**
+"EN/DE" label (not a dynamically-updated current-language indicator — a
+JS-driven text update would hit the exact same problem) and no inline
+`onclick`:
+
+```html
+  <span style="color:#5a6072" aria-hidden="true">·</span>
+  <button id="gg-lang-toggle" type="button" title="Switch language" style="background:none;border:none;padding:0;margin:0;font:inherit;color:#8fd8e8;cursor:pointer">EN/DE</button>
+```
+
+`i18n.js`'s `document`-level delegated click listener (above) picks up clicks
+on it regardless of how often the framework recreates the node underneath —
+`injectToggle()` sees the button already exists and does nothing further.
+`i18n.js` itself doesn't need any per-game changes for this case.
 
 ### Per-game strings
 

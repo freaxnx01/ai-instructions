@@ -176,15 +176,117 @@ Optional, nothing committed: `npx prettier --write .`, `npx eslint .`.
 ## Localization (i18n)
 
 Base's `de`/`en` rule applies to games with meaningful UI text (menus, HUD
-copy, quiz questions). Lightweight vanilla pattern:
-
-- A `strings` object keyed by locale (`{ en: {...}, de: {...} }`)
-- Detect the initial language from `navigator.language`
-- Provide a switcher; persist the choice in `localStorage`
+copy, quiz questions).
 
 **Carve-out:** pure-arcade games with negligible on-screen text (a score and a
 "GAME OVER") may defer i18n. Text-heavy games (quizzes, dialog-driven games)
 must comply.
+
+### `i18n.js` (copy verbatim into the game repo)
+
+Every `game-*` repo is served under the same `github.freaxnx01.ch` origin
+(different path per repo), so `localStorage` is shared across all of them —
+one `gg-lang` key means picking a language once carries into every other
+game. `i18n.js` loads like `version.js` (classic script, before the game's
+own script) and owns detection, persistence, and the toggle button; it knows
+nothing about any individual game's strings.
+
+```javascript
+(function () {
+  "use strict";
+
+  var SUPPORTED = ["en", "de"];
+  var STORAGE_KEY = "gg-lang";
+
+  function detect() {
+    var stored = null;
+    try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    if (stored && SUPPORTED.indexOf(stored) !== -1) return stored;
+    var nav = (navigator.language || "en").toLowerCase();
+    return nav.indexOf("de") === 0 ? "de" : "en";
+  }
+
+  window.GG_LANG = detect();
+
+  window.ggSetLang = function (lang) {
+    if (SUPPORTED.indexOf(lang) === -1) return;
+    window.GG_LANG = lang;
+    try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+    window.dispatchEvent(new CustomEvent("gg-langchange", { detail: { lang: lang } }));
+  };
+
+  function injectToggle() {
+    var nav = document.getElementById("game-nav");
+    if (!nav || document.getElementById("gg-lang-toggle")) return;
+
+    var sep = document.createElement("span");
+    sep.setAttribute("aria-hidden", "true");
+    sep.style.color = "#5a6072";
+    sep.textContent = "·";
+
+    var btn = document.createElement("button");
+    btn.id = "gg-lang-toggle";
+    btn.type = "button";
+    btn.title = "Switch language";
+    btn.style.cssText =
+      "background:none;border:none;padding:0;margin:0;font:inherit;color:#8fd8e8;cursor:pointer";
+    btn.textContent = window.GG_LANG.toUpperCase();
+
+    btn.addEventListener("click", function () {
+      window.ggSetLang(window.GG_LANG === "en" ? "de" : "en");
+    });
+
+    window.addEventListener("gg-langchange", function (e) {
+      btn.textContent = e.detail.lang.toUpperCase();
+    });
+
+    nav.appendChild(sep);
+    nav.appendChild(btn);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectToggle);
+  } else {
+    injectToggle();
+  }
+})();
+```
+
+Load it in `index.html`, right where `version.js` loads:
+
+```html
+<script src="./version.js"></script>
+<script src="./i18n.js"></script>
+```
+
+The toggle button is appended into the existing `#game-nav` footer — no new
+UI surface to design per game.
+
+### Per-game strings
+
+Each game owns its own strings — `i18n.js` never sees them:
+
+```javascript
+const STRINGS = {
+  en: { newGame: "NEW GAME" /* ... */ },
+  de: { newGame: "NEUES SPIEL" /* ... */ },
+};
+
+function t(key) {
+  return (STRINGS[window.GG_LANG] && STRINGS[window.GG_LANG][key])
+    || STRINGS.en[key]
+    || key;
+}
+```
+
+Replace every literal English UI string in a render path with `t("key")`.
+Whatever a game's normal re-render mechanism is, trigger it from a
+`gg-langchange` listener so switching languages updates on-screen text
+immediately, without a reload:
+
+```javascript
+window.addEventListener("gg-langchange", () => /* re-render */);
+```
 
 ---
 

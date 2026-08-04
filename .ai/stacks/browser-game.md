@@ -24,7 +24,7 @@ artifact.
 | Multiplayer | Manual WebRTC (`RTCPeerConnection` + data channel) — **no signaling server, PeerJS, or Firebase** |
 | Persistence | `localStorage` |
 | Hosting | GitHub Pages, static, served from repo-root `index.html` |
-| Build | **None required.** A few games use a source→`index.html` bundler (dc-tool) — see Project Structure |
+| Build | **None required.** A few games use a source→`index.html` bundler ("dc-tool" format) — see Project Structure; there is **no CLI** for it, re-bundling is a manual merge |
 | Versioning | Git tag `vX.Y.Z` (authoritative) + `version.js` display mirror |
 | Changelog | `git-cliff` + `cliff.toml` (base tooling) |
 | Lint / format | Optional `npx prettier` / `npx eslint`; nothing committed |
@@ -50,13 +50,33 @@ vendor/                 ← third-party libs vendored (no npm)
 CHANGELOG.md  cliff.toml  README.md  LICENSE
 
 # Bundled game (dc-tool)
-source/ or *.dc.html    ← EDIT THIS
-index.html  support.js  ← GENERATED — do not hand-edit
+src/*.dc.html           ← EDIT THIS
+index.html  support.js  ← GENERATED — see re-bundling process below
 ```
 
 A bundled game is identified by a `data-dc-script` / `type="text/x-dc"` marker
-in `index.html`. For those repos, always edit the source and re-bundle — never
-hand-edit the generated `index.html` or `support.js`.
+in `index.html`. `support.js` is the generic dc runtime — it loads React/Babel
+from `unpkg.com` at page-load time and hydrates the `<x-dc>` markup live in the
+browser; it is not a build step and essentially never changes when editing
+game logic. `index.html` is what GitHub Pages actually serves.
+
+**There is no `dc-tool` CLI.** Despite the name, re-bundling is not a command
+to run — it's a manual merge, confirmed working in practice (`game-stack-duel`,
+2026-08-04): copy the full current `src/*.dc.html` content into `index.html`,
+then re-apply `index.html`'s fixed set of source-file-only additions (these
+vary slightly per repo, but typically: a `<link rel="icon">` favicon tag, a
+`<script src="./version.js">` include, a `#game-nav` footer block, and a
+version-badge self-healing script — diff the previous `index.html` against the
+source once to find a given repo's exact set). Verify the merge with
+`diff src/*.dc.html index.html` — the only differences should be exactly
+those known additions; anything else means the merge missed something.
+
+Editing `index.html` directly with *ad hoc* changes (not derived from the
+source) is still forbidden (see the Agent Guardrails below). But skipping the
+re-bundle entirely after a source edit is the more common and more damaging
+failure: the source commit looks complete, but the published site doesn't
+change at all, because GitHub Pages serves the stale `index.html`. Always
+re-bundle as part of the same change, not a follow-up.
 
 ---
 
@@ -432,8 +452,11 @@ In addition to the base guardrails:
 - Do not introduce a signaling server or a P2P library (PeerJS, Firebase).
 - Keep the game shippable as static files — no server-side runtime.
 - Keep `version.js` equal to the latest git tag; never let it drift.
-- Never hand-edit a bundled game's generated `index.html`/`support.js` — edit
-  the source and re-bundle.
+- Never make ad hoc edits directly to a bundled game's generated
+  `index.html`/`support.js` — edit the source and re-bundle (see "Bundled game
+  (dc-tool)" above for the manual-merge process; there is no CLI). Skipping the
+  re-bundle after a source change is just as wrong as hand-editing — it ships
+  nothing.
 - Don't embed secrets in client JS.
 
 ### Never generate (this stack)

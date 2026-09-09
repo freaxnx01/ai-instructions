@@ -337,7 +337,7 @@ jobs:
 - [ ] `AndroidManifest.xml` with the minimum permissions needed
 - [ ] `CHANGELOG.md` with `[Unreleased]` section
 - [ ] `cliff.toml` for `git-cliff`
-- [ ] `.gitignore` includes `build/`, `.dart_tool/`, `.flutter-plugins`, `.flutter-plugins-dependencies`, `*.iml`, `.idea/`, platform `Pods/`, signing material
+- [ ] `.gitignore` includes `build/`, `.dart_tool/`, `.flutter-plugins`, `.flutter-plugins-dependencies`, `*.iml`, `.idea/`, platform `Pods/`, signing material, `.worktrees/`
 - [ ] `.github/copilot-instructions.md`, `CLAUDE.md`, `SKILL.md` regenerated from base + this overlay
 - [ ] GitHub Actions workflow (analyze + test + build)
 - [ ] Branch protection on `main`

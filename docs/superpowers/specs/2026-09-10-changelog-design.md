@@ -80,8 +80,26 @@ This is the heart of the design. Groups are ordered by how urgently they answer
 | `Stack overlays` | scopes `browser-game`, `go`, `flutter`, `dotnet`, `dotnet-webapi`, `dotnet-blazor`, `dotnet-library`, `dotnet-fx48-legacy`, `ci`, `ci-overlay`, `quality-gates`, `shell-scripts`, `gdscript-godot` | Scan for your own overlay; ignore the rest. |
 | `Stack overlays (unspecified)` | scope `stacks` | 13 commits use this generic scope and some span three overlays at once — it cannot be resolved to one overlay automatically. |
 | `Shared skills & commands` | scope `skills` | Consumer-facing: these bodies are copied into the consumer's `.ai/skills/`. |
-| `Repo only — no re-sync needed` | bare `ci:` type, scopes `readme`, `repo`, `workflow`, `agent-workflow`, `conventions`, plus `chore:` | Explicitly listed so the reader can confirm nothing applies to them. |
-| `Uncategorised` | anything else | Catch-all. A future scope must never vanish silently; entries landing here are a signal to extend the mapping. |
+| `Unscoped or unmapped — see the commit` | conventional commits carrying **no scope** | 16 commits in history have no scope, spanning 2026-03-11 to 2026-08-04 — this is not confined to the early era. 11 are real base/overlay content and cannot be auto-assigned. Also the catch-all for a future scope nobody mapped. |
+| `Repo only — no re-sync needed` | bare `ci:` type, scopes `readme`, `repo`, `workflow`, `agent-workflow`, `conventions`, `changelog`, plus `chore:` | Explicitly listed so the reader can confirm nothing applies to them. |
+
+### The tripwire
+
+A newly-introduced scope must never vanish silently. The obvious guard —
+a `{ field = "scope", pattern = ".+" }` parser to catch "has a scope but matched
+nothing" — **does not work**: git-cliff 2.10.1 treats a missing scope as matching `.+`,
+so scope-less commits fall into it too. Verified against real history.
+
+The working guard uses the template instead. Scoped entries render as
+`- **scope** — subject` and unscoped ones as `- subject`, so **a scoped entry inside the
+catch-all group is a mapping gap**, and it is greppable:
+
+```bash
+awk '/^### Unscoped or unmapped/{f=1;next} /^### /{f=0} f&&/^- \*\*/' CHANGELOG.md
+```
+
+Any output is a scope that needs adding to `cliff.toml`. Empty output means the mapping
+is complete.
 
 ### Scope assignments that are not obvious
 
@@ -177,9 +195,10 @@ before March".
   (idempotence — the watermark is what makes this true).
 - Every group in the table above is reachable by at least one real commit in history;
   a group that matches nothing is a mapping bug.
-- **Every one of the 19 scopes in history lands in a named group** — nothing falls through
-  to `Uncategorised` on the backfill. Anything that does is a mapping gap to fix before
-  the file is committed, not after.
+- **The tripwire is clean** — no scoped entry appears inside the catch-all group (see
+  *The tripwire* above for the exact command). Verified against all 19 scopes.
+- Generation is **deterministic**: two consecutive runs over the same range produce
+  byte-identical output.
 - The `ci` trap is covered both ways: a bare `ci:` commit lands in *Repo only*, and a
   `docs(ci)` commit lands under the `ci` overlay.
 - `git tag -l` is still empty afterwards.
@@ -195,6 +214,7 @@ before March".
 - [ ] `cliff.toml` exists at the repo root and `git-cliff --config cliff.toml` renders
       without error.
 - [ ] Entries are grouped by consumer impact per the grouping model, not by commit type.
+- [ ] The tripwire is clean — no scoped entry sits in the catch-all group.
 - [ ] A bare `ci:` commit appears under *Repo only*; a `docs(ci)` commit appears under the
       `ci` overlay.
 - [ ] Backfill covers the conventional history back to 2026-03-11, and the file states

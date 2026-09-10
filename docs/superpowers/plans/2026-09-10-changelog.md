@@ -38,9 +38,11 @@ Three tasks, one per file, in that order — each is independently reviewable an
 ## Task 1: Create `cliff.toml` with the consumer-impact mapping
 
 **Files:**
+
 - Create: `cliff.toml`
 
 **Interfaces:**
+
 - Produces: a `cliff.toml` that `git-cliff --config cliff.toml` accepts, rendering exactly six group headings in this order: `Base — affects every stack`, `Stack overlays`, `Stack overlays (unspecified)`, `Shared skills & commands`, `Unscoped or unmapped — see the commit`, `Repo only — no re-sync needed`.
 - Produces: the entry format Task 2's tripwire depends on — scoped entries render as `- **scope** — subject`, unscoped ones as `- subject`.
 
@@ -187,9 +189,11 @@ git commit -m "docs(changelog): add cliff.toml with consumer-impact grouping"
 ## Task 2: Generate and commit `CHANGELOG.md`
 
 **Files:**
+
 - Create: `CHANGELOG.md`
 
 **Interfaces:**
+
 - Consumes: `cliff.toml` from Task 1, and its `- **scope** — subject` entry format.
 - Produces: `CHANGELOG.md` containing the watermark comment `<!-- changelog-covers-through: <sha> -->`, which Task 3's documented procedure reads.
 
@@ -306,9 +310,11 @@ git commit -m "docs(changelog): add CHANGELOG.md, backfilled to 2026-03-11"
 ## Task 3: Document the regeneration procedure in `CLAUDE.md`
 
 **Files:**
+
 - Modify: `CLAUDE.md` — the `## Essential Commands` section
 
 **Interfaces:**
+
 - Consumes: the watermark comment written by Task 2.
 
 - [ ] **Step 1: Write the failing test**

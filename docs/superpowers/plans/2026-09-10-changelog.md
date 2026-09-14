@@ -6,13 +6,14 @@
 
 **Architecture:** Two new root files — `cliff.toml` (the generation config, where the scope→consumer-impact mapping lives) and `CHANGELOG.md` (generated, then committed). No git tags: `git-cliff --tag <date>` names a dated section without creating one. Incremental regeneration is anchored by a watermark comment inside `CHANGELOG.md`, because with no tags `--unreleased` means all history.
 
-**Tech Stack:** `git-cliff` 2.10.1 (already installed at `/home/admin/.local/bin/git-cliff`), Conventional Commits, Keep a Changelog, Tera templates (git-cliff's template language).
+**Tech Stack:** `git-cliff` 2.10.1 (**not preinstalled — Task 0 installs it**), Conventional Commits, Keep a Changelog, Tera templates (git-cliff's template language).
 
 **Spec:** [`docs/superpowers/specs/2026-09-10-changelog-design.md`](../specs/2026-09-10-changelog-design.md)
 
 ## Global Constraints
 
 - **This is a content repo, not an application.** There is no compiler, package manager, or test runner. "Tests" here are `git-cliff` runs and `grep`/`awk` assertions over its output.
+- **`git-cliff` is not preinstalled.** Task 0 installs a pinned 2.10.1 binary and must run before any other task. Nothing else in this plan works without it.
 - **Never create a git tag.** `git tag -l` must be empty when this plan finishes. The dated section comes from `--tag <date>`, which does not write a tag.
 - **Do not edit** `.ai/stacks/dotnet-blazor.md` or `.ai/stacks/dotnet-webapi.md` — they are generated. This plan does not touch them.
 - **Byte budget:** `./scripts/check-claude-md-size.sh` must still report all ten stacks `ok`. Neither new file is inlined into an assembled `CLAUDE.md`, so the numbers should not move at all. The pre-commit hook runs this and **rejects** a commit that breaks it.
@@ -20,6 +21,61 @@
 - **`main` is protected** (required check: `pre-commit`, no required reviews). Work on a branch and open a PR; do not push to `main`.
 - Commit messages follow Conventional Commits, scoped by area: `docs(changelog): …`.
 - The exact date string `2026-09-10` appears in the backfill section heading. If implementing on a later date, use that later date consistently everywhere — but the watermark SHA must still be the real `HEAD` at generation time.
+
+---
+
+## Task 0: Install `git-cliff` on the runner
+
+Every other task shells out to `git-cliff`. It is **not** preinstalled on
+`ubuntu-latest`, and there is no apt package for it — the first dispatch of this issue
+burned its whole turn budget after `git-cliff: command not found` and opened no PR. Do
+this first.
+
+**Files:** none (environment setup only — nothing is committed by this task)
+
+**Interfaces:**
+
+- Produces: `git-cliff` on `PATH`, reporting exactly `git-cliff 2.10.1`. Every later task
+  depends on this.
+
+- [ ] **Step 1: Install the pinned release binary**
+
+The version matters: `cliff.toml` in Task 1 was verified against 2.10.1 specifically, and
+its `field = "scope"` parser behaviour is version-sensitive.
+
+```bash
+curl -sSL -o /tmp/git-cliff.tar.gz \
+  https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf /tmp/git-cliff.tar.gz -C /tmp
+mkdir -p "$HOME/.local/bin"
+install -m 0755 /tmp/git-cliff-2.10.1/git-cliff "$HOME/.local/bin/git-cliff"
+export PATH="$HOME/.local/bin:$PATH"
+echo "$HOME/.local/bin" >> "$GITHUB_PATH"   # persists PATH across later workflow steps
+```
+
+The tarball extracts to a versioned directory (`git-cliff-2.10.1/git-cliff`), not to a
+bare binary — extracting and then running `/tmp/git-cliff` will not work.
+
+- [ ] **Step 2: Verify the version**
+
+```bash
+git-cliff --version
+```
+
+Expected, exactly: `git-cliff 2.10.1`
+
+If this prints a different version, stop — the `cliff.toml` in Task 1 is only verified
+against 2.10.1. If it prints `command not found`, the `PATH` export did not survive;
+re-run `export PATH="$HOME/.local/bin:$PATH"` in the current shell.
+
+- [ ] **Step 3: Confirm it runs against this repo**
+
+```bash
+git-cliff --version && git log --oneline -1
+```
+
+Expected: the version line and this repo's newest commit. No commit, no file change, and
+nothing to push for this task — it is environment setup, so move straight to Task 1.
 
 ---
 
@@ -441,4 +497,4 @@ Expected: `check-drift` and `pre-commit` both pass. Do **not** merge without ask
 - **Do not "fix" the `Unscoped or unmapped` group by inventing scopes** for the 16 historical commits. Rewriting history is out of scope; the group existing is the designed outcome.
 - **Do not add a `field = "scope", pattern = ".+"` parser** as a tripwire. It looks correct and is not — git-cliff 2.10.1 matches `.+` against a missing scope, so it swallows the unscoped commits. The template-based tripwire in the tests is the working substitute.
 - **`--tag` does not create a tag.** If you find yourself running `git tag`, stop — a Global Constraint is being violated.
-- If `git-cliff` is not on `PATH`, it is at `/home/admin/.local/bin/git-cliff`.
+- **`git-cliff` is not on the runner.** Task 0 installs it and every later task depends on that. Do not assume a system package or a preinstalled binary — the first dispatch of this issue died searching four paths for one that did not exist. If `git-cliff: command not found` appears at any point, Task 0 was skipped or its `PATH` export was lost to a new shell; re-export it rather than hunting for the binary.

@@ -170,6 +170,18 @@ to be better than its commit subjects.
 If the watermark is missing or unreadable, **stop and ask** — regenerating all history
 over the existing file silently duplicates every entry.
 
+**Run this on `main`, never on a feature branch.** The watermark must name a commit
+reachable from `main`, and a branch commit is not: `main` is squash-merged, so the branch
+SHAs are replaced by one new commit and the old ones become unreachable. A watermark
+pointing at a branch SHA still resolves in the clone that wrote it — the object lingers —
+and fails for everyone else with `fatal: unknown revision`. Verify before committing:
+
+```bash
+git merge-base --is-ancestor \
+  "$(grep -oP '(?<=<!-- changelog-covers-through: )[0-9a-f]+' CHANGELOG.md)" \
+  origin/main && echo "watermark ok" || echo "watermark not on main — fix before merging"
+```
+
 There is no compiler, package manager, or test runner in this repo.
 
 ---

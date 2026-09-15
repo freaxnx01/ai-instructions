@@ -1,6 +1,6 @@
 # Changelog
 
-<!-- changelog-covers-through: 14a277a -->
+<!-- changelog-covers-through: 97c5a29 -->
 
 All notable changes to `ai-instructions` are documented here, following
 [Keep a Changelog](https://keepachangelog.com). Sections are dated rather than
@@ -19,6 +19,12 @@ Entries are generated from Conventional Commits with `git-cliff`. The 17 non-con
 commits — the pre-convention history up to 2026-05-27, plus three merge commits — are
 **not** included; see `git log` for those. Files under `.ai/references/` are linked by the
 overlays rather than inlined, so changes there reach you without a re-sync.
+
+## 2026-09-15
+
+### Repo only — no re-sync needed
+
+- **changelog** — add a consumer-facing CHANGELOG.md (#35)
 
 ## 2026-09-14
 

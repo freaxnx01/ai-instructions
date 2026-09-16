@@ -26,4 +26,9 @@ jobs:
       # which additionally needs a GitHub App token — see agent-workflow's
       # docs/CONSUMER-SETUP.md section 2.
       ai-review-human-merge: true
+      # On a `request_changes` verdict, let the implementer attempt up to
+      # self-fix-max-iterations (default 2) fix -> re-review cycles before
+      # the review blocks. Never runs after a `block` verdict — the agent
+      # already refused — and is a no-op on `approve`.
+      self-fix: true
       pipeline-ref: v2

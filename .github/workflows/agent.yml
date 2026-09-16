@@ -18,4 +18,12 @@ jobs:
       issue-number: ${{ github.event.issue.number }}
       runner-labels: '["ubuntu-latest"]'
       default-model: claude-sonnet-5
+      # Opt in to the AI-review + human-merge flow (ADR-004). Requires the
+      # issue to also carry the `ai-review-human-merge` label — /gh:implement
+      # applies it automatically once this is true. The pipeline reviews its
+      # own draft PR and, on approve, promotes it to ready for a HUMAN to
+      # merge. No auto-merge, no safety envelope: that is ai-review-ai-merge,
+      # which additionally needs a GitHub App token — see agent-workflow's
+      # docs/CONSUMER-SETUP.md section 2.
+      ai-review-human-merge: true
       pipeline-ref: v2

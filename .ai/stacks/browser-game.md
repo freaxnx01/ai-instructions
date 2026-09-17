@@ -228,6 +228,24 @@ This is how the `#game-nav` i18n-toggle bug above was actually found — a
 correct, but the button was invisible and non-functional in a real browser
 the whole time.
 
+**Run the verification in the foreground. Never `run_in_background`.** A
+headless CI agent has no one to deliver a completion notification to, so a
+backgrounded Playwright run never reports back. What follows is the agent
+spending its remaining turns idling on `sleep 1`, `echo idle`, `:` — waiting
+for a signal that cannot arrive — until the run ends. It then reports
+**success while having pushed nothing**: no branch, no PR, the work committed
+only on a runner that is about to be destroyed. That is worse than a plain
+failure, because it is indistinguishable from a real success in the run report
+and in `/ai-stats`.
+
+A `game-wipfelkratzer` dispatch died exactly this way: 59 of 80 turns, 17
+minutes, $2.76, `success`, nothing to show for it. If a check is slow, give the
+foreground call a generous `timeout` and let it block — blocking is the point.
+
+Commit and push the branch **before** starting verification, not after. Then a
+run that dies mid-check still leaves the work recoverable instead of taking it
+down with the runner.
+
 ---
 
 ## Localization (i18n)
@@ -285,7 +303,14 @@ nothing about any individual game's strings.
   // note below.
   document.addEventListener("click", function (e) {
     var btn = e.target.closest && e.target.closest("#gg-lang-toggle");
-    if (btn) window.ggSetLang(window.GG_LANG === "en" ? "de" : "en");
+    if (!btn) return;
+    window.ggSetLang(window.GG_LANG === "en" ? "de" : "en");
+    // Games with keyboard-driven controls (e.g. Enter/Space to confirm) can
+    // otherwise re-trigger this button via the browser's native
+    // button-activation-on-keypress behavior if it retains focus after the
+    // mouse click — confirmed with game-nibbles, where a post-toggle Enter
+    // press (a real gameplay key) silently flipped the language back.
+    if (typeof btn.blur === "function") btn.blur();
   });
 
   function injectToggle() {
@@ -336,6 +361,15 @@ Load it in `index.html`, right where `version.js` loads:
 
 For a plain-HTML game, `injectToggle()` appends the button into the existing
 `#game-nav` footer itself — no new UI surface to design per game.
+
+**Adding keyboard controls to a game that already has `i18n.js`? Re-copy the
+file.** Copies taken before the `btn.blur()` fix leave the toggle focused after
+a click, so a gameplay key that isn't `preventDefault()`'d — `Enter`, `Space` —
+re-triggers it via the browser's native button-activation-on-keypress and
+silently flips the language back. Harmless while a game is mouse-only, which is
+why an older copy can sit unnoticed for months; it becomes a live bug the moment
+keys are wired up. The symptom looks like a broken language toggle, not a
+keyboard problem, and it took a Playwright session to pin down the first time.
 
 ### Framework-managed `#game-nav` (dc-tool / DCLogic games)
 

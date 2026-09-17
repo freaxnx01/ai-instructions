@@ -281,6 +281,7 @@ Every PR runs `lint` + `test`. `act-run` is opt-in (label-gated) to keep PR runt
 - [ ] `VERSION` file
 - [ ] `CHANGELOG.md` with `[Unreleased]` section
 - [ ] `cliff.toml` for `git-cliff`
+- [ ] `.gitignore` includes `.act/`, `coverage/`, `.worktrees/`
 - [ ] `.github/workflows/lint.yml` (actionlint + shellcheck)
 - [ ] At least one reusable workflow under `.github/workflows/`
 - [ ] At least one `*.test.yml` covering the reusable workflow under `act`

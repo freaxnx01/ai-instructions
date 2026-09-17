@@ -11,11 +11,24 @@ permissions:            # a reusable workflow can't be granted more than its
 jobs:
   claude:
     if: github.event.label.name == 'ai-implement'
-    uses: freaxnx01/agent-workflow/.github/workflows/agent-implement.yml@v1
+    uses: freaxnx01/agent-workflow/.github/workflows/agent-implement.yml@v2
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
     with:
       issue-number: ${{ github.event.issue.number }}
       runner-labels: '["ubuntu-latest"]'
       default-model: claude-sonnet-5
-      pipeline-ref: v1
+      # Opt in to the AI-review + human-merge flow (ADR-004). Requires the
+      # issue to also carry the `ai-review-human-merge` label — /gh:implement
+      # applies it automatically once this is true. The pipeline reviews its
+      # own draft PR and, on approve, promotes it to ready for a HUMAN to
+      # merge. No auto-merge, no safety envelope: that is ai-review-ai-merge,
+      # which additionally needs a GitHub App token — see agent-workflow's
+      # docs/CONSUMER-SETUP.md section 2.
+      ai-review-human-merge: true
+      # On a `request_changes` verdict, let the implementer attempt up to
+      # self-fix-max-iterations (default 2) fix -> re-review cycles before
+      # the review blocks. Never runs after a `block` verdict — the agent
+      # already refused — and is a no-op on `approve`.
+      self-fix: true
+      pipeline-ref: v2

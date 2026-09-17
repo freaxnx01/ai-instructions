@@ -137,6 +137,51 @@ rules and guardrails inline; move elaboration, long code blocks, and tables. Rai
 docker run --rm -v "$PWD":/workdir docker.io/davidanson/markdownlint-cli2:latest
 ```
 
+```bash
+# Regenerate CHANGELOG.md after new commits land on main.
+# The repo has no tags, so `--unreleased` would mean ALL history — the
+# watermark comment in CHANGELOG.md is what bounds the range instead.
+SHA=$(grep -oP '(?<=<!-- changelog-covers-through: )[0-9a-f]+' CHANGELOG.md)
+# Render the new dated section, dropping git-cliff's own "# Changelog" line.
+git-cliff --config cliff.toml "${SHA}..HEAD" --tag "$(date +%F)" | tail -n +3 > /tmp/new-section.md
+# Insert it above the newest existing dated section — NOT with --prepend, which
+# would put it above the watermark and the header prose.
+LINE=$(grep -n '^## [0-9]' CHANGELOG.md | head -1 | cut -d: -f1)
+# The bare `echo` matters: git-cliff emits no trailing blank line, and without it
+# the last entry would butt against the next `##` heading (markdownlint MD022/MD032).
+{ head -n "$((LINE - 1))" CHANGELOG.md; cat /tmp/new-section.md; echo; tail -n "+${LINE}" CHANGELOG.md; } > /tmp/cl
+mv /tmp/cl CHANGELOG.md
+# then update the watermark to the new HEAD:
+sed -i "s/changelog-covers-through: ${SHA}/changelog-covers-through: $(git rev-parse --short HEAD)/" CHANGELOG.md
+```
+
+If the range lands on a date that already has a section, fold the new entries into it by
+hand — two `## <same-date>` headings trip markdownlint's MD024.
+
+`git-cliff` is not preinstalled — fetch the pinned 2.10.1 release binary
+(`git-cliff-2.10.1-x86_64-unknown-linux-gnu.tar.gz`) onto `PATH` first. The grouping model
+lives in `cliff.toml`; a new scope that isn't mapped there falls into the
+*Unscoped or unmapped* group, which is the signal to add it.
+
+Review the prepended section before committing — edit any entry whose commit subject
+reads poorly for a consumer. Generation produces the draft; the committed file is allowed
+to be better than its commit subjects.
+
+If the watermark is missing or unreadable, **stop and ask** — regenerating all history
+over the existing file silently duplicates every entry.
+
+**Run this on `main`, never on a feature branch.** The watermark must name a commit
+reachable from `main`, and a branch commit is not: `main` is squash-merged, so the branch
+SHAs are replaced by one new commit and the old ones become unreachable. A watermark
+pointing at a branch SHA still resolves in the clone that wrote it — the object lingers —
+and fails for everyone else with `fatal: unknown revision`. Verify before committing:
+
+```bash
+git merge-base --is-ancestor \
+  "$(grep -oP '(?<=<!-- changelog-covers-through: )[0-9a-f]+' CHANGELOG.md)" \
+  origin/main && echo "watermark ok" || echo "watermark not on main — fix before merging"
+```
+
 There is no compiler, package manager, or test runner in this repo.
 
 ---

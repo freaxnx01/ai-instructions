@@ -7,7 +7,7 @@ Init-time checklists. Use when bootstrapping a new project. Layered: each sectio
 - [ ] `README.md` with setup + run commands
 - [ ] `CHANGELOG.md` with `[Unreleased]` section
 - [ ] `cliff.toml` for `git-cliff`
-- [ ] `.gitignore` appropriate to the stack
+- [ ] `.gitignore` appropriate to the stack, including `.worktrees/`
 - [ ] `CLAUDE.md` and `.github/copilot-instructions.md` generated from base + chosen stack overlay
 - [ ] `/health/live` and `/health/ready` endpoints wired (or stack equivalent)
 - [ ] CI workflow (build + test + security scan)

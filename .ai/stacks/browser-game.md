@@ -349,6 +349,15 @@ Load it in `index.html`, right where `version.js` loads:
 For a plain-HTML game, `injectToggle()` appends the button into the existing
 `#game-nav` footer itself — no new UI surface to design per game.
 
+**Adding keyboard controls to a game that already has `i18n.js`? Re-copy the
+file.** Copies taken before the `btn.blur()` fix leave the toggle focused after
+a click, so a gameplay key that isn't `preventDefault()`'d — `Enter`, `Space` —
+re-triggers it via the browser's native button-activation-on-keypress and
+silently flips the language back. Harmless while a game is mouse-only, which is
+why an older copy can sit unnoticed for months; it becomes a live bug the moment
+keys are wired up. The symptom looks like a broken language toggle, not a
+keyboard problem, and it took a Playwright session to pin down the first time.
+
 ### Framework-managed `#game-nav` (dc-tool / DCLogic games)
 
 Some bundled games (identified by a `data-dc-script` / `type="text/x-dc"`

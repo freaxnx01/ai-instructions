@@ -290,7 +290,14 @@ nothing about any individual game's strings.
   // note below.
   document.addEventListener("click", function (e) {
     var btn = e.target.closest && e.target.closest("#gg-lang-toggle");
-    if (btn) window.ggSetLang(window.GG_LANG === "en" ? "de" : "en");
+    if (!btn) return;
+    window.ggSetLang(window.GG_LANG === "en" ? "de" : "en");
+    // Games with keyboard-driven controls (e.g. Enter/Space to confirm) can
+    // otherwise re-trigger this button via the browser's native
+    // button-activation-on-keypress behavior if it retains focus after the
+    // mouse click — confirmed with game-nibbles, where a post-toggle Enter
+    // press (a real gameplay key) silently flipped the language back.
+    if (typeof btn.blur === "function") btn.blur();
   });
 
   function injectToggle() {

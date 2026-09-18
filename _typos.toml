@@ -1,0 +1,18 @@
+# typos (crate-ci/typos) configuration.
+#
+# This repo publishes localization guidance, so German sample copy appears in
+# the overlays — and typos is an English-only spellchecker. Words below are
+# correct German, not misspellings.
+#
+# Add to this list rather than rewording the German: the samples exist to show
+# real de/en copy, and an example rewritten to dodge a spellchecker stops
+# demonstrating the thing it is there to demonstrate.
+#
+# The hook is invoked by pre-commit with explicit file paths (see
+# .pre-commit-config.yaml), which is why `typos` run bare over the tree can
+# disagree with CI — reproduce a CI failure with:
+#   git ls-files | xargs typos
+
+[default.extend-words]
+# German "is" — in the browser-game overlay's changelog-voice example.
+ist = "ist"

@@ -246,45 +246,17 @@ Commit and push the branch **before** starting verification, not after. Then a
 run that dies mid-check still leaves the work recoverable instead of taking it
 down with the runner.
 
-### Animated cameras: wait for **arrival**, not for stillness
+### Animated cameras: wait for **arrival**, not stillness
 
-A headless software renderer draws at well under one frame per second, and the
-loop clamps each frame's delta (`dt = Math.min(clock.getDelta(), 0.05)`). A
-camera tween therefore advances **0.05 s of its own time per frame**, whatever
-the wall clock says: a 0.9-second move takes ~25 seconds under
-`--use-gl=swiftshader`. Nothing is broken — the same code runs in 0.9 s at
-60 fps.
-
-Two failure modes follow, and both have cost real debugging time in
-`game-wipfelkratzer`:
-
-- **Measuring too early** reads a camera mid-flight. Its position is somewhere
-  between the old viewpoint and the new one, and `OrbitControls` will have
-  clamped it to `maxDistance` on the way — so it looks like the camera ended up
-  outside the room, drifting, with a tween that never finishes. It is simply
-  still travelling.
-- **Waiting for stillness** doesn't help either. Sampling until the position
-  stops changing either fires during a slow frame (false "arrived") or never
-  fires at all, because `enableDamping` decays asymptotically and exact equality
-  never comes.
-
-Wait for **arrival** instead — the animation queue is empty *and* the camera is
-where it was sent:
-
-```python
-DA = """() => { const w = window.wipfelkratzer;
-  const { eye } = w.besuchCamFor(w.besuch.k);
-  return w.tweenCount() === 0 && w.camera.position.distanceTo(eye) < 0.2; }"""
-page.wait_for_function(DA, timeout=120000, polling=1000)
-```
-
-This needs the game to expose two things on its debug hook: the number of
-running animations, and the function that computes the intended viewpoint.
-Export both — a camera check that cannot ask "are we there yet" can only guess.
-
-And when a camera measurement does come out red, **run the same probe against
-`main` before believing it**. Identical numbers there mean the drift is the
-renderer, not the change.
+The loop clamps each frame (`dt = Math.min(clock.getDelta(), 0.05)`) and a
+headless renderer draws under 1 fps — a 0.9 s camera tween then takes ~25 s.
+Measure earlier and the camera sits mid-flight, clamped to `maxDistance`,
+reading like a defect; waiting for it to stop is no better, since
+`enableDamping` decays asymptotically. Poll the end state: animation
+queue empty **and** camera at its target (`tweenCount() === 0` plus
+`camera.position.distanceTo(eye) < 0.2`, `timeout=120000`). Export both on
+the debug hook. Re-run a red camera check against `main` first — identical
+numbers mean the renderer, not the change.
 
 ---
 

@@ -7,6 +7,26 @@ or sessions land here; in-repo work goes to GitHub Issues.
 For context, see `workflows/personal-dev-workflow.md` Decisions section —
 many entries below trace back to a specific Decision.
 
+## Session 2026-09-18 (changelog + pipeline follow-ups) — two CI-hygiene decisions open
+
+- [ ] **Decide whether to set `enforce_admins: true` on `main`.** Branch
+      protection requires the `pre-commit` check, but `enforce_admins` is
+      `false`, so an admin can merge past a red one. #43 did exactly that on
+      2026-09-17: its `pre-commit` failed, it merged anyway, and because the
+      hook runs `--all-files` it broke **every** subsequent PR until #46 fixed
+      it. Nothing warned; `main`'s own push run just went red. Enabling it
+      removes the foot-gun but also removes the escape hatch — a deliberate
+      call, not an obvious yes.
+- [ ] **Close the local-vs-CI check gap.** The local pre-commit hook runs only
+      `scripts/check-claude-md-size.sh`; markdownlint, typos, shellcheck and the
+      rest run in CI only. Four PRs this session passed locally and failed CI.
+      Either install `pre-commit` locally (`pre-commit run --all-files`) or
+      document the per-tool reproductions. Known gotcha: bare `typos` over the
+      tree reports nothing — CI passes explicit paths, so reproduce with
+      `git ls-files | xargs typos` (now recorded in `_typos.toml`). Same class
+      of gap applies to any repo using `templates/pre-commit/`, so a fix here
+      is publishable.
+
 ## Open questions (not yet decisions)
 
 - [ ] **Workflow skill chain: Idea → Issue → PR → Review → Merge.**

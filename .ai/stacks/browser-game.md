@@ -278,91 +278,7 @@ game. `i18n.js` loads like `version.js` (classic script, before the game's
 own script) and owns detection, persistence, and the toggle button; it knows
 nothing about any individual game's strings.
 
-```javascript
-(function () {
-  "use strict";
-
-  var SUPPORTED = ["en", "de"];
-  var STORAGE_KEY = "gg-lang";
-
-  function detect() {
-    var stored = null;
-    try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
-    if (stored && SUPPORTED.indexOf(stored) !== -1) return stored;
-    var nav = (navigator.language || "en").toLowerCase();
-    return nav.indexOf("de") === 0 ? "de" : "en";
-  }
-
-  window.GG_LANG = detect();
-
-  window.ggSetLang = function (lang) {
-    if (SUPPORTED.indexOf(lang) === -1) return;
-    window.GG_LANG = lang;
-    try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
-    window.dispatchEvent(new CustomEvent("gg-langchange", { detail: { lang: lang } }));
-  };
-
-  // Delegated on `document`, not on the button itself: some games' #game-nav
-  // is managed by a UI framework (e.g. a dc-tool-bundled game whose runtime
-  // mounts a React root over it) that periodically recreates its DOM
-  // subtree from the framework's own tracked template — silently dropping
-  // any listener attached directly to a child node (and stripping raw
-  // `onclick="..."` attributes, since a framework like React expects a
-  // function-valued prop, not a string). A listener on `document` is
-  // outside that subtree, so it survives regardless of how often the
-  // button node underneath it gets replaced; it just re-checks
-  // `event.target` on every click. See the "Framework-managed #game-nav"
-  // note below.
-  document.addEventListener("click", function (e) {
-    var btn = e.target.closest && e.target.closest("#gg-lang-toggle");
-    if (!btn) return;
-    window.ggSetLang(window.GG_LANG === "en" ? "de" : "en");
-    // Games with keyboard-driven controls (e.g. Enter/Space to confirm) can
-    // otherwise re-trigger this button via the browser's native
-    // button-activation-on-keypress behavior if it retains focus after the
-    // mouse click — confirmed with game-nibbles, where a post-toggle Enter
-    // press (a real gameplay key) silently flipped the language back.
-    if (typeof btn.blur === "function") btn.blur();
-  });
-
-  function injectToggle() {
-    // A pre-existing button (e.g. static markup inside a framework-managed
-    // #game-nav — see below) is left alone; the delegated listener above
-    // already covers clicks on it.
-    if (document.getElementById("gg-lang-toggle")) return;
-
-    var nav = document.getElementById("game-nav");
-    if (!nav) return;
-
-    var sep = document.createElement("span");
-    sep.setAttribute("aria-hidden", "true");
-    sep.style.color = "#5a6072";
-    sep.textContent = "·";
-
-    var btn = document.createElement("button");
-    btn.id = "gg-lang-toggle";
-    btn.type = "button";
-    btn.title = "Switch language";
-    btn.style.cssText =
-      "background:none;border:none;padding:0;margin:0;font:inherit;color:#8fd8e8;cursor:pointer";
-    btn.textContent = window.GG_LANG.toUpperCase();
-
-    window.addEventListener("gg-langchange", function (e) {
-      var b = document.getElementById("gg-lang-toggle");
-      if (b) b.textContent = e.detail.lang.toUpperCase();
-    });
-
-    nav.appendChild(sep);
-    nav.appendChild(btn);
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", injectToggle);
-  } else {
-    injectToggle();
-  }
-})();
-```
+**Source:** [`i18n-js.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/browser-game/i18n-js.md) — copy its code block verbatim into the game repo as `i18n.js`.
 
 Load it in `index.html`, right where `version.js` loads:
 
@@ -410,7 +326,7 @@ JS-driven text update would hit the exact same problem) and no inline
   <button id="gg-lang-toggle" type="button" title="Switch language" style="background:none;border:none;padding:0;margin:0;font:inherit;color:#8fd8e8;cursor:pointer">EN/DE</button>
 ```
 
-`i18n.js`'s `document`-level delegated click listener (above) picks up clicks
+`i18n.js`'s `document`-level delegated click listener (see the source) picks up clicks
 on it regardless of how often the framework recreates the node underneath —
 `injectToggle()` sees the button already exists and does nothing further.
 `i18n.js` itself doesn't need any per-game changes for this case.
@@ -442,6 +358,42 @@ window.addEventListener("gg-langchange", () => /* re-render */);
 ```
 
 ---
+
+## Testhub (dev-mode playtesting)
+
+One hub for all `game-*` repos at `https://github.freaxnx01.ch/testhub/`, opened in its own window
+beside the game: it lists the open items of each game's `test-todo.md`, jumps the game to the spot an
+item is about, takes notes and screenshots, and exports them for `/processing-test-feedback`.
+Players load nothing — the client arrives only in dev mode.
+
+Loader, in the game's `index.html` (copy verbatim; `?dev=1` turns dev mode on, `?dev=0` off, stored
+in `localStorage['gg-dev']`, shared by every game on the origin):
+
+```html
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search).get('dev'), stored = null;
+    try { if (q === '1') localStorage.setItem('gg-dev', '1'); else if (q === '0') localStorage.removeItem('gg-dev'); stored = localStorage.getItem('gg-dev'); } catch (e) { }
+    if (q !== '1' && (q === '0' || stored !== '1')) return;
+    var s = document.createElement('script'); s.src = '/testhub/client.js'; s.async = true; document.head.appendChild(s);
+  })();
+</script>
+```
+
+The client defines `window.ggTesthub` and then fires `gg-testhub-ready` (it may arrive before or
+after the game script — handle both orders, no polling):
+
+- `register(id, fn, label)` — a jump target; `fn()` puts the player there. `id` = `[a-z0-9._-]+`.
+- `onScreenshot(fn)` — `fn()` returns a PNG data URL (or a promise of one), canvas only, no HUD.
+- `setInfo({ game, version })` — shown in the hub and in the export header.
+
+Rules:
+
+- **Tag `test-todo.md` items.** An agent writing a `test-todo.md` block after a merge tags each item
+  with `{go: <id>}` where a target exists, and registers a new target when the feature adds a hidden
+  place. A block heading may carry the tag; its items inherit it.
+- **A Testhub jump counts like a J jump** in games with races: go through the same placement code,
+  so a race in progress is flagged, not counted.
 
 ## Games Hub Integration
 
@@ -497,6 +449,7 @@ python3 scripts/capture_screenshots.py
 - [ ] `README.md`
 - [ ] `LICENSE`
 - [ ] Hub card added in `freaxnx01.github.io/games/index.html`
+- [ ] Testhub loader, `setInfo`, and a `test-todo.md` with `{go: <id>}` tags (see Testhub)
 - [ ] `CLAUDE.md` / `SKILL.md` / `.github/copilot-instructions.md` synced from
       base + this overlay
 - [ ] Branch protection on `main`

@@ -20,6 +20,31 @@ commits — the pre-convention history up to 2026-05-27, plus three merge commit
 **not** included; see `git log` for those. Files under `.ai/references/` are linked by the
 overlays rather than inlined, so changes there reach you without a re-sync.
 
+## [Unreleased]
+
+<!-- Hand-written, because it describes work that has not landed on main yet.
+     Delete this section when git-cliff generates the dated section covering
+     these commits — otherwise the entries appear twice. -->
+
+### Added
+
+- **`.ai/rules/` tier** — path-scoped rules, loaded only when a matching file is in play.
+  `base/<name>.md` applies to every stack, `<stack>/<name>.md` to one. Each rule declares
+  `name` (= filename stem) and a non-empty `globs` list; a rule without a glob is invalid,
+  because unscoped guidance belongs in base or the overlay. See
+  [Path-scoped rules](README.md#path-scoped-rules-airules).
+- **`scripts/check-rules.sh`** — validates the contract above (plus: a stack folder must
+  name a real overlay, and no base rule name may be repeated by a stack). Run by the
+  `build-stacks-drift` workflow, with fixture tests in `tests/run-check-rules-tests.sh`.
+- **Three pilot rules** — `base/powershell-5.1` (`**/*.ps1`, `**/*.psm1`),
+  `ci/bash-conventions` (`**/*.sh`) and `ci/github-actions` (`.github/workflows/**`,
+  `.github/actions/**`).
+
+**No re-sync needed yet.** The rules are copies: the same content is still in the base
+`## Scripting` section and the ci `## Bash Conventions` / `## GitHub Actions Conventions`
+sections, which are unchanged. Those sections become pointers in a later change, once the
+sync skill can install rules — so nothing is lost by re-syncing before then.
+
 ## 2026-09-18
 
 ### Stack overlays

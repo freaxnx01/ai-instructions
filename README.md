@@ -35,6 +35,12 @@ Canonical, stack-agnostic AI agent instructions with per-stack overlays. Each pr
                                   codes, idempotency, ETag, rate limiting,
                                   CORS, HTTP logging, LRO, OpenAPI/Scalar,
                                   k6, Kiota, Bruno, integration tests)
+  rules/                          ← path-scoped rules: loaded only for matching files
+    base/
+      powershell-5.1.md           ← globs **/*.ps1, **/*.psm1 — every stack
+    ci/
+      bash-conventions.md         ← globs **/*.sh
+      github-actions.md           ← globs .github/workflows/**, .github/actions/**
   skills/
     commit.md           · push.md
   references/                     ← long code blocks / checklists pulled out of overlays
@@ -47,6 +53,11 @@ scripts/
   build-stacks.sh               ← concatenates _partials/dotnet-core.md +
                                   _layers/dotnet-*.md into the flat
                                   stacks/dotnet-*.md files
+  check-rules.sh                ← validates the .ai/rules/ frontmatter contract
+
+tests/
+  run-check-rules-tests.sh      ← fixture tests for check-rules.sh
+  fixtures/rules/               ← one miniature repo root per failure mode
 
 .claude/commands/               ← Claude Code slash-command wrappers for the skills above
 
@@ -63,6 +74,41 @@ templates/                      ← seed config copied into a project by /sync-a
 CLAUDE.md                       ← agent context for working in THIS repo (content + build
                                   script) — not a stack rendering
 ```
+
+### Path-scoped rules (`.ai/rules/`)
+
+A **rule** is guidance that only applies to some files. Instead of spending base or
+overlay bytes on it for every file an agent touches, it lives under `.ai/rules/` and is
+loaded only when a matching file is in play:
+
+- `.ai/rules/base/<name>.md` — loaded by every stack
+- `.ai/rules/<stack>/<name>.md` — loaded by that stack only; `<stack>` must name a real
+  `.ai/stacks/<stack>.md` overlay
+
+Each rule carries exactly two frontmatter keys:
+
+```markdown
+---
+name: bash-conventions
+globs: ["**/*.sh"]
+---
+
+## Bash Conventions
+...
+```
+
+`name` must equal the filename stem, and `globs` must be a non-empty YAML flow list of
+quoted patterns. **A rule without a glob is invalid** — if guidance applies to every file,
+it belongs in `base-instructions.md`; if it applies to every file of one stack, it belongs
+in that overlay. `scripts/check-rules.sh` enforces all of this and the `build-stacks-drift`
+workflow runs it, so a typo'd stack folder or a missing glob fails the PR rather than
+quietly never being installed.
+
+The three rules shipped so far are **copies**: their content is still present in the base
+`## Scripting` section and the ci `## Bash Conventions` / `## GitHub Actions Conventions`
+sections. The duplication is deliberate and temporary — the source sections become pointers
+only once the sync skill can install rules, so no consumer loses the content by re-syncing
+in between.
 
 The **polyglot lint standard** (a single `pre-commit` gate covering YAML, shell,
 Markdown, JSON, Dockerfiles and Python) is documented in

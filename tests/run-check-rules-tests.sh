@@ -82,6 +82,13 @@ assert_case unknown-stack 1 '.ai/rules/dotnet-webap/typo.md' 'no .ai/stacks/'
 # load the name twice.
 assert_case duplicate-name 1 '.ai/rules/ci/shared.md' 'duplicate'
 
+# A rule outside the two-folder model (dropped straight into .ai/rules/) would
+# never be installed by sync.
+assert_case misplaced 1 '.ai/rules/loose.md' 'not at .ai/rules/'
+
+# Frontmatter that opens but never closes must fail, not swallow the body.
+assert_case unterminated 1 '.ai/rules/base/open.md' 'unterminated'
+
 # A root that does not exist is a usage error, not a validation failure.
 assert_case does-not-exist 2
 

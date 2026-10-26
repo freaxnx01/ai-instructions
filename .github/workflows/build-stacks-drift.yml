@@ -7,6 +7,9 @@ on:
       - '.ai/stacks/**'
       - 'scripts/build-stacks.sh'
       - 'scripts/check-claude-md-size.sh'
+      - '.ai/rules/**'
+      - 'scripts/check-rules.sh'
+      - 'tests/**'
       - '.github/workflows/build-stacks-drift.yml'
   push:
     branches: [main]
@@ -31,3 +34,9 @@ jobs:
 
       - name: Fail if assembled CLAUDE.md would exceed Claude Code's 40k performance budget
         run: ./scripts/check-claude-md-size.sh
+
+      - name: Run the rule validator's fixture tests
+        run: bash tests/run-check-rules-tests.sh
+
+      - name: Validate .ai/rules frontmatter
+        run: ./scripts/check-rules.sh

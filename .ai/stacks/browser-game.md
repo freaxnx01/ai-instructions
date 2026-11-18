@@ -95,6 +95,20 @@ re-bundle as part of the same change, not a follow-up.
 
 ---
 
+## UI Controls
+
+- **On/off settings are sliding switches** — fixed label naming the setting,
+  a `role="switch"` button with `aria-checked` and the state shown by knob
+  position + colour. **Never put the state in a button's text** ("Music: on"):
+  the player can't tell current state from click action.
+- Compact bars (menu, HUD) may use an icon button whose symbol shows the
+  state, with `aria-pressed` and a fixed `aria-label` ("Music").
+- Multi-value settings: segmented control or `<select>`, not a cycling button.
+
+Markup/CSS/JS: [`toggle-switch.md`](https://github.com/freaxnx01/ai-instructions/blob/main/.ai/references/browser-game/toggle-switch.md)
+
+---
+
 ## Game Loop
 
 - **Fixed-timestep simulation, variable-rate render:** an accumulator

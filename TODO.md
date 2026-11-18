@@ -7,6 +7,18 @@ or sessions land here; in-repo work goes to GitHub Issues.
 For context, see `workflows/personal-dev-workflow.md` Decisions section —
 many entries below trace back to a specific Decision.
 
+## Session 2026-10-27 (agent-workflow `/release-package`) — release recipes are names only
+
+- [ ] **Give the dotnet template real release recipes.** agent-workflow's new
+      `/release-package` (freaxnx01/agent-workflow#572) drives `bump-auto →
+      release → package → push-release` and stops when a recipe is missing.
+      `.ai/examples/dotnet/justfile` ships `bump-auto` and `release` (with a
+      `release-notes` stub), but `package` and `push-release` are only named in
+      `.ai/references/dotnet/justfile-recipes.md`, and `ship-auto` /
+      `release-scope` exist only in BI-ArchiveUploader. Decide which to template
+      (at least `push-release` with its rebase-and-move-the-tag guard, which is
+      not project-specific) and which stay per-project (`package` body).
+
 ## Open questions (not yet decisions)
 
 - [ ] **Workflow skill chain: Idea → Issue → PR → Review → Merge.**

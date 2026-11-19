@@ -1,0 +1,17 @@
+name: Issue milestone
+on:
+  issues:
+    types: [opened, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  milestone:
+    permissions:
+      contents: read
+      issues: write   # assigns the backlog milestone
+    uses: freaxnx01/agent-workflow/.github/workflows/backlog-milestone.yml@v2
+    with:
+      issue-number: ${{ github.event.issue.number }}
+      pipeline-ref: v2

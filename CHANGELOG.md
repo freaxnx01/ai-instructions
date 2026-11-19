@@ -1,6 +1,6 @@
 # Changelog
 
-<!-- changelog-covers-through: 84e7850 -->
+<!-- changelog-covers-through: c46d53b -->
 
 All notable changes to `ai-instructions` are documented here, following
 [Keep a Changelog](https://keepachangelog.com). Sections are dated rather than
@@ -19,6 +19,26 @@ Entries are generated from Conventional Commits with `git-cliff`. The 17 non-con
 commits — the pre-convention history up to 2026-05-27, plus three merge commits — are
 **not** included; see `git log` for those. Files under `.ai/references/` are linked by the
 overlays rather than inlined, so changes there reach you without a re-sync.
+
+## 2026-11-19
+
+### Base — affects every stack
+
+- **base** — per-version issue list and a release-notes TL;DR (#49)
+
+### Stack overlays
+
+- **browser-game** — camera checks wait for arrival, not stillness (#48)
+- **browser-game** — timestamp changelog entries and bold their keywords (#52)
+- **browser-game** — add Testhub dev-mode playtesting section (#53)
+
+### Repo only — no re-sync needed
+
+- **lint** — allowlist German sample copy for the typos hook (#46)
+- **changelog** — cover #39 through #43 (#45)
+- **ci** — agent workflow declares `agent: claude` and grants `actions: write` (#50)
+- **todo** — park release-recipe template gap found by /release-package (#59)
+- **conventions** — every open issue has a milestone, with a standing `backlog` milestone for unscheduled work (#61)
 
 ## 2026-09-18
 

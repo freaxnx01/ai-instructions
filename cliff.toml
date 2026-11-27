@@ -33,9 +33,12 @@ commit_parsers = [
   { message = "^chore", group = "<!-- 5 -->Repo only — no re-sync needed" },
 
   # `lint` and `ai` are Base: both modify .ai/base-instructions.md itself.
+  # Not for this repo's own lint/hook/CI config (_typos.toml, .github/workflows/):
+  # those take scope `repo` (see CLAUDE.md, Commits). #46 and #50 got this wrong.
   { field = "scope", pattern = "^(base|scaffold|lint|ai)$", group = "<!-- 0 -->Base — affects every stack" },
 
   # `ci-overlay` is an alias for the ci overlay; `quality-gates` is .NET content.
+  # `ci` means the published overlay, never this repo's own workflows (scope `repo`).
   { field = "scope", pattern = "^(browser-game|go|flutter|dotnet|dotnet-webapi|dotnet-blazor|dotnet-library|dotnet-fx48-legacy|ci|ci-overlay|quality-gates|shell-scripts|gdscript-godot)$", group = "<!-- 1 -->Stack overlays" },
 
   # Generic scope spanning several overlays at once — cannot be resolved.

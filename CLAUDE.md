@@ -203,7 +203,11 @@ There is no compiler, package manager, or test runner in this repo.
 ## Conventions for This Repo
 
 - **Commits:** Conventional Commits (`docs`, `refactor`, `feat`, `ci`, `chore`). Scope by
-  area, e.g. `refactor(stacks): …`, `docs(readme): …`.
+  area, e.g. `refactor(stacks): …`, `docs(readme): …`. The scope picks the CHANGELOG
+  group (`cliff.toml`): `lint` and `ci` mean the *published* base lint rules and the ci
+  overlay. A change to this repo's own lint, hook or workflow config (`_typos.toml`,
+  `.github/workflows/`, `.pre-commit-config.yaml`) takes scope `repo`, e.g.
+  `fix(repo): …`, so it lands under *Repo only*.
 - **Branching:** branch from `main`, PR back, squash/rebase merge.
 - **Tone of the content itself:** imperative, terminal-friendly, no fluff. The overlays are
   read by agents, so favour precise rules over prose.
